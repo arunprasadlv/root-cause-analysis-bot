@@ -10,6 +10,9 @@ langchain-openai
 # Vector store + database
 supabase
 
+# OpenAI client (direct — not via LangChain wrapper)
+openai
+
 # Document parsing
 markdown-it-py
 
