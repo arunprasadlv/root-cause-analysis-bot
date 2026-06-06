@@ -22,3 +22,8 @@ pydantic
 
 # Local dev only
 python-dotenv
+
+# Eval only (not deployed to Vercel) — install with: pip install ragas datasets pandas
+# ragas>=0.1.0
+# datasets
+# pandas
