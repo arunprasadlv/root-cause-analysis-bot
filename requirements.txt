@@ -1,0 +1,21 @@
+# Core API
+fastapi
+uvicorn
+
+# LangChain
+langchain
+langchain-community
+langchain-openai
+
+# Vector store + database
+supabase
+
+# Document parsing
+markdown-it-py
+
+# API utilities
+httpx
+pydantic
+
+# Local dev only
+python-dotenv
