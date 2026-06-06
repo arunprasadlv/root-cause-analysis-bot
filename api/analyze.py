@@ -16,9 +16,10 @@ _openai = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = os.environ.get("LLM_MODEL", "gpt-5.4-mini")
-TOP_K = 5       # chunks passed to the LLM
-RETRIEVAL_K = 10  # candidates fetched per retriever before RRF
-RRF_K = 60      # RRF constant — controls how steeply rank drops off
+TOP_K = 5
+RETRIEVAL_K = 10
+RRF_K = 60
+HISTORY_WINDOW = int(os.environ.get("HISTORY_WINDOW", "10"))  # max conversation turns kept
 
 _FTS_STOP_WORDS = {
     "are", "the", "and", "for", "not", "how", "what", "does", "when",
@@ -51,16 +52,38 @@ RULES — follow these exactly:
 5. If multiple patterns apply, address each separately with its citation.\
 """
 
+_REFORMULATE_PROMPT = """\
+You are rewriting a user query to make it self-contained for a search engine.
+Given the conversation history below, rewrite the CURRENT QUERY so it resolves
+all pronouns and references without requiring the history to be understood.
+Output only the rewritten query — no preamble, no punctuation changes beyond
+what is needed, no explanation.
+
+CONVERSATION HISTORY:
+{history}
+
+CURRENT QUERY: {query}
+
+REWRITTEN QUERY:\
+"""
+
+
+# ── Pydantic models ───────────────────────────────────────────────────────────
+
+class HistoryMessage(BaseModel):
+    role: str    # "user" or "assistant"
+    content: str
+
 
 class AnalyzeRequest(BaseModel):
     query: str
-    history: list = []
+    history: list[HistoryMessage] = []
 
 
 class Source(BaseModel):
     pattern_id: str
     section_title: str
-    score: float  # RRF score (replaces raw cosine similarity from Phase 2)
+    score: float
 
 
 class AnalyzeResponse(BaseModel):
@@ -68,17 +91,13 @@ class AnalyzeResponse(BaseModel):
     sources: list[Source]
 
 
+# ── Retrieval helpers ─────────────────────────────────────────────────────────
+
 def extract_hex_codes(text: str) -> list[str]:
-    """Extract hex error codes (e.g. 0x00d30003) from query text."""
     return list(dict.fromkeys(re.findall(r'0x[0-9A-Fa-f]+', text, re.IGNORECASE)))
 
 
 def build_fts_query(text: str) -> str:
-    """
-    Convert a natural language query into a Postgres tsquery OR expression.
-    Splits on non-alpha boundaries so LDAP_BIND_FAILED → ldap | bind | failed.
-    Returns empty string if no usable tokens remain.
-    """
     tokens = re.findall(r'[a-zA-Z]{3,}', text)
     unique = list(dict.fromkeys(
         t.lower() for t in tokens if t.lower() not in _FTS_STOP_WORDS
@@ -87,20 +106,14 @@ def build_fts_query(text: str) -> str:
 
 
 def reciprocal_rank_fusion(*result_lists: list) -> list:
-    """
-    Merge any number of ranked result lists using Reciprocal Rank Fusion.
-    Returns top TOP_K chunks ordered by combined RRF score.
-    """
     scores: dict = {}
     chunk_data: dict = {}
-
     for results in result_lists:
         for rank, doc in enumerate(results):
             doc_id = doc["id"]
             scores[doc_id] = scores.get(doc_id, 0) + 1 / (RRF_K + rank + 1)
             if doc_id not in chunk_data:
                 chunk_data[doc_id] = doc
-
     ranked_ids = sorted(scores, key=lambda x: scores[x], reverse=True)
     output = []
     for doc_id in ranked_ids[:TOP_K]:
@@ -110,18 +123,63 @@ def reciprocal_rank_fusion(*result_lists: list) -> list:
     return output
 
 
+# ── Conversation helpers ──────────────────────────────────────────────────────
+
+def trim_history(history: list[HistoryMessage]) -> list[HistoryMessage]:
+    """Keep the most recent HISTORY_WINDOW turns (1 turn = user + assistant pair)."""
+    max_messages = HISTORY_WINDOW * 2
+    return history[-max_messages:] if len(history) > max_messages else history
+
+
+def reformulate_query(query: str, history: list[HistoryMessage]) -> str:
+    """
+    Rewrite the query to be self-contained using the last 3 turns of history.
+    Returns the original query unchanged if history is empty or reformulation fails.
+    """
+    if not history:
+        return query
+
+    recent = history[-6:]  # last 3 turns (6 messages)
+    history_text = "\n".join(f"{m.role.upper()}: {m.content}" for m in recent)
+
+    try:
+        completion = _openai.chat.completions.create(
+            model=CHAT_MODEL,
+            temperature=0,
+            max_completion_tokens=128,
+            messages=[{
+                "role": "user",
+                "content": _REFORMULATE_PROMPT.format(
+                    history=history_text,
+                    query=query,
+                ),
+            }],
+        )
+        rewritten = completion.choices[0].message.content.strip()
+        return rewritten if rewritten else query
+    except Exception:
+        return query  # degrade gracefully — retrieval still works with original
+
+
+# ── Endpoint ──────────────────────────────────────────────────────────────────
+
 @router.post("/api/analyze", response_model=AnalyzeResponse)
 def analyze(req: AnalyzeRequest):
-    # 1. Embed query
+    history = trim_history(req.history)
+
+    # 1. Reformulate query using conversation history (for retrieval only)
+    retrieval_query = reformulate_query(req.query, history)
+
+    # 2. Embed the reformulated query
     try:
         embedding = _openai.embeddings.create(
             model=EMBED_MODEL,
-            input=req.query,
+            input=retrieval_query,
         ).data[0].embedding
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Embedding failed: {e}")
 
-    # 2. Dense retrieval (pgvector cosine similarity)
+    # 3. Dense retrieval
     try:
         dense_results = _supabase.rpc("match_documents", {
             "query_embedding": embedding,
@@ -131,9 +189,9 @@ def analyze(req: AnalyzeRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Dense retrieval failed: {e}")
 
-    # 3. Sparse retrieval (Supabase FTS) — degrades gracefully to dense-only on failure
+    # 4. Sparse retrieval (FTS)
     sparse_results = []
-    fts_query = build_fts_query(req.query)
+    fts_query = build_fts_query(retrieval_query)
     if fts_query:
         try:
             sparse_results = _supabase.rpc("match_documents_fts", {
@@ -144,11 +202,9 @@ def analyze(req: AnalyzeRequest):
         except Exception:
             sparse_results = []
 
-    # 4. Metadata-filtered retrieval for hex error codes (e.g. 0x00d30003).
-    # FTS and dense search both miss hex strings; jsonb containment on the
-    # error_codes metadata field is the only reliable signal for these.
+    # 5. Hex error code metadata-filtered retrieval
     hex_results = []
-    for code in extract_hex_codes(req.query):
+    for code in extract_hex_codes(retrieval_query):
         try:
             rows = _supabase.rpc("match_documents", {
                 "query_embedding": embedding,
@@ -158,7 +214,6 @@ def analyze(req: AnalyzeRequest):
             hex_results.extend(rows)
         except Exception:
             pass
-    # Deduplicate hex results by id (keep first occurrence)
     seen: set = set()
     deduped_hex: list = []
     for row in hex_results:
@@ -166,10 +221,10 @@ def analyze(req: AnalyzeRequest):
             seen.add(row["id"])
             deduped_hex.append(row)
 
-    # 5. Merge via RRF → top TOP_K chunks
+    # 6. RRF merge
     chunks = reciprocal_rank_fusion(dense_results, sparse_results, deduped_hex)
 
-    # 6. Format context for the prompt
+    # 7. Format context
     context_parts = []
     for chunk in chunks:
         meta = chunk["metadata"]
@@ -177,16 +232,22 @@ def analyze(req: AnalyzeRequest):
         context_parts.append(f"{header}\n{chunk['content']}")
     context = "\n\n---\n\n".join(context_parts)
 
-    # 7. Generate answer
+    # 8. Build messages — history turns first, then current query with context
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for msg in history:
+        messages.append({"role": msg.role, "content": msg.content})
+    messages.append({
+        "role": "user",
+        "content": f"RUNBOOK CONTEXT:\n{context}\n\nQuery: {req.query}",
+    })
+
+    # 9. Generate answer
     try:
         completion = _openai.chat.completions.create(
             model=CHAT_MODEL,
             temperature=0,
             max_completion_tokens=1024,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"RUNBOOK CONTEXT:\n{context}\n\nQuery: {req.query}"},
-            ],
+            messages=messages,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM call failed: {e}")
