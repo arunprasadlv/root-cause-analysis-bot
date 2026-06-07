@@ -75,9 +75,10 @@ RULES — follow these exactly:
    background. For error code queries: 1–2 sentences identifying the code and its cause.
    For triage queries: state the decision path only. For procedure queries: list only
    the steps directly relevant to the question asked.
-7. For escalation queries (who to contact, SLA, escalation path): list EVERY row
-   from the escalation matrix that applies — do not stop at the first match. Format
-   each entry as: Condition | Escalate To | SLA.\
+7. For escalation queries (who to contact, SLA, escalation path): list ALL rows
+   from the escalation matrix for the matching pattern — include every condition,
+   every team, and every SLA, not just the one that best matches the query.
+   Format each entry as: Condition | Escalate To | SLA.\
 """
 
 _REFORMULATE_PROMPT = """\
