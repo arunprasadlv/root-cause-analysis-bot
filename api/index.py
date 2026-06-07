@@ -16,12 +16,18 @@ app.include_router(health_router)
 
 _root = Path(__file__).parent.parent
 _index_html = _root / "frontend" / "index.html"
+_chat_html   = _root / "frontend" / "chat.html"
 _reports_dir = _root / "eval" / "reports"
 
 
 @app.get("/")
 def root():
     return FileResponse(_index_html)
+
+
+@app.get("/chat")
+def chat():
+    return FileResponse(_chat_html)
 
 
 @app.get("/eval-report")
