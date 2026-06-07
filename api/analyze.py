@@ -49,7 +49,11 @@ RULES — follow these exactly:
      "No relevant runbook found for this query."
 3. Cite every factual claim with its source: [Pattern N — <Name> | <Section Title>]
 4. Do not speculate or add steps not described in the context.
-5. If multiple patterns apply, address each separately with its citation.\
+5. If multiple patterns apply, address each separately with its citation.
+6. Be concise. Answer only what was asked — do not volunteer unrequested steps or
+   background. For error code queries: 1–2 sentences identifying the code and its cause.
+   For triage queries: state the decision path only. For procedure queries: list only
+   the steps directly relevant to the question asked.\
 """
 
 _REFORMULATE_PROMPT = """\
@@ -93,8 +97,11 @@ class AnalyzeResponse(BaseModel):
 
 # ── Retrieval helpers ─────────────────────────────────────────────────────────
 
-def extract_hex_codes(text: str) -> list[str]:
-    return list(dict.fromkeys(re.findall(r'0x[0-9A-Fa-f]+', text, re.IGNORECASE)))
+def extract_error_codes(text: str) -> list[str]:
+    hex_codes   = re.findall(r'0x[0-9A-Fa-f]+', text, re.IGNORECASE)
+    symbolic    = re.findall(r'\b([A-Z][A-Z_0-9]{4,})\b', text)
+    http_status = re.findall(r'\bHTTP\s+([2-5][0-9]{2})\b', text, re.IGNORECASE)
+    return list(dict.fromkeys(hex_codes + symbolic + http_status))
 
 
 def build_fts_query(text: str) -> str:
@@ -103,6 +110,25 @@ def build_fts_query(text: str) -> str:
         t.lower() for t in tokens if t.lower() not in _FTS_STOP_WORDS
     ))
     return " | ".join(unique) if unique else ""
+
+
+def deduplicate_by_pattern(chunks: list, max_per_pattern: int = 3) -> list:
+    seen: dict = {}
+    out: list  = []
+    for c in chunks:
+        pid = c["metadata"]["pattern_id"]
+        if seen.get(pid, 0) < max_per_pattern:
+            out.append(c)
+            seen[pid] = seen.get(pid, 0) + 1
+    return out
+
+
+def promote_error_signatures(chunks: list, query: str) -> list:
+    if not extract_error_codes(query):
+        return chunks
+    sig   = [c for c in chunks if c["metadata"].get("section_type") == "error_signatures"]
+    other = [c for c in chunks if c["metadata"].get("section_type") != "error_signatures"]
+    return (sig + other)[:TOP_K]
 
 
 def reciprocal_rank_fusion(*result_lists: list) -> list:
@@ -202,9 +228,9 @@ def analyze(req: AnalyzeRequest):
         except Exception:
             sparse_results = []
 
-    # 5. Hex error code metadata-filtered retrieval
+    # 5. Error code metadata-filtered retrieval (hex + symbolic)
     hex_results = []
-    for code in extract_hex_codes(retrieval_query):
+    for code in extract_error_codes(retrieval_query):
         try:
             rows = _supabase.rpc("match_documents", {
                 "query_embedding": embedding,
@@ -223,6 +249,12 @@ def analyze(req: AnalyzeRequest):
 
     # 6. RRF merge
     chunks = reciprocal_rank_fusion(dense_results, sparse_results, deduped_hex)
+
+    # 6a. Deduplicate — max 2 chunks per pattern to avoid one pattern monopolising slots
+    chunks = deduplicate_by_pattern(chunks)
+
+    # 6b. Promote error signature chunks to top positions for error code queries
+    chunks = promote_error_signatures(chunks, retrieval_query)
 
     # 7. Format context
     context_parts = []
@@ -246,7 +278,7 @@ def analyze(req: AnalyzeRequest):
         completion = _openai.chat.completions.create(
             model=CHAT_MODEL,
             temperature=0,
-            max_completion_tokens=1024,
+            max_completion_tokens=512,
             messages=messages,
         )
     except Exception as e:

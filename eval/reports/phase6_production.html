@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Eval Report — phase6_production</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+    color: white;
+    padding: 28px 36px;
+  }
+  .page-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .page-header .sub { color: #94a3b8; font-size: 13px; margin-top: 4px; }
+  .header-meta { display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+  .meta-pill {
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+  .meta-pill strong { color: white; }
+
+  /* ── Gate C Banner ── */
+  .gate-banner {
+    padding: 14px 36px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .gate-pass { background: #dcfce7; color: #15803d; border-bottom: 2px solid #86efac; }
+  .gate-fail { background: #fee2e2; color: #b91c1c; border-bottom: 2px solid #fca5a5; }
+  .gate-stats { display: flex; gap: 12px; font-weight: 400; color: inherit; }
+  .stat { opacity: 0.8; }
+  .stat strong { font-weight: 600; opacity: 1; }
+
+  /* ── Content ── */
+  .content { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+
+  /* ── Section headers ── */
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  /* ── Metric groups ── */
+  .group-section { margin-bottom: 28px; }
+  .group-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+    margin-bottom: 10px;
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .metric-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    border-left: 4px solid transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card-pass { border-left-color: #22c55e; }
+  .card-fail { border-left-color: #ef4444; }
+  .card-missing { border-left-color: #94a3b8; }
+  .metric-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 8px; }
+  .metric-label { font-size: 12px; color: #64748b; font-weight: 500; line-height: 1.3; }
+  .metric-value { font-size: 26px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  .card-fail .metric-value { color: #b91c1c; }
+  .progress-bar {
+    height: 5px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #22c55e;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .card-fail .progress-fill { background: #ef4444; }
+  .card-missing .progress-fill { background: #94a3b8; }
+  .metric-target { font-size: 11px; color: #94a3b8; }
+
+  /* ── Badges ── */
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge-pass { background: #dcfce7; color: #15803d; }
+  .badge-fail { background: #fee2e2; color: #b91c1c; }
+  .badge-missing { background: #f1f5f9; color: #94a3b8; }
+  .badge-hit { background: #dbeafe; color: #1d4ed8; font-size: 11px; padding: 2px 8px; border-radius: 4px; };
+  .badge-miss { background: #fef3c7; color: #b45309; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+  .badge-type {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  /* ── Test Cases ── */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+  .filter-btn {
+    border: 1px solid #e2e8f0;
+    background: white;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #475569;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { background: #f8fafc; }
+  .filter-btn.active {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+  }
+  .search-box {
+    margin-left: auto;
+    padding: 5px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 12px;
+    outline: none;
+    width: 220px;
+    color: #0f172a;
+    background: white;
+  }
+  .search-box:focus { border-color: #94a3b8; }
+
+  .results-count { font-size: 12px; color: #64748b; margin-bottom: 10px; }
+
+  .cases-table { width: 100%; border-collapse: collapse; }
+  .cases-table thead tr {
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .cases-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    padding: 10px 14px;
+  }
+  .cases-table td { padding: 10px 14px; vertical-align: top; }
+  .case-row {
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .case-row:hover { background: #f8fafc; }
+  .case-row.row-miss { background: #fffbeb; }
+  .case-row.row-miss:hover { background: #fef3c7; }
+  .query-text {
+    font-size: 13px;
+    color: #1e293b;
+    max-width: 380px;
+    line-height: 1.4;
+  }
+  .pattern-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 7px;
+    background: #eff6ff;
+    color: #2563eb;
+    border-radius: 4px;
+    margin: 1px;
+    font-weight: 500;
+  }
+  .pattern-tag.retrieved { background: #f0fdf4; color: #15803d; }
+  .pattern-tag.missed { background: #fee2e2; color: #b91c1c; }
+
+  /* ── Expanded detail ── */
+  .detail-row { display: none; background: #f8fafc; }
+  .detail-row.open { display: table-row; }
+  .detail-panel {
+    padding: 16px 20px;
+    border-left: 3px solid #cbd5e1;
+    margin: 4px 14px 8px;
+    border-radius: 0 6px 6px 0;
+  }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .detail-block h4 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+  }
+  .detail-block p {
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+  .sources-list { list-style: none; }
+  .sources-list li {
+    font-size: 12px;
+    color: #475569;
+    padding: 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sources-list .rank {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    min-width: 20px;
+  }
+  .sources-list .src-pattern { color: #2563eb; font-weight: 600; }
+  .sources-list .src-score { color: #94a3b8; font-size: 11px; margin-left: auto; }
+
+  .expand-icon { float: right; color: #94a3b8; font-size: 12px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .metric-grid { grid-template-columns: repeat(2, 1fr); }
+    .page-header { padding: 20px 16px; }
+    .content { padding: 16px; }
+    .gate-banner { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Evaluation Report</h1>
+  <div class="sub">Phase: <strong>phase6_production</strong></div>
+  <div class="header-meta">
+    <span class="meta-pill">Run: <strong>June 06, 2026 at 19:29 UTC</strong></span>
+    <span class="meta-pill">Top-K: <strong>5</strong></span>
+    <span class="meta-pill">Total cases: <strong>52</strong></span>
+    <span class="meta-pill">Positives: <strong>47</strong></span>
+    <span class="meta-pill">Negatives: <strong>5</strong></span>
+    <span class="meta-pill">Error code cases: <strong>18</strong></span>
+    <span class="meta-pill">Escalation cases: <strong>9</strong></span>
+  </div>
+</div>
+
+<div class="gate-banner gate-fail">
+  <span>GATE C: 5 failing, 0 missing</span>
+  <div class="gate-stats">
+    <span class="stat"><strong>9</strong> passing</span>
+    <span class="stat"><strong>5</strong> failing</span>
+    
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="section-title">Metric Scores vs Gate C Targets</div>
+  
+      <div class="group-section">
+        <h3 class="group-title">Retrieval</h3>
+        <div class="metric-grid">
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Hit Rate @ 5</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">100.0%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:100%"></div>
+          </div>
+          <div class="metric-target">Target: min 85%</div>
+        </div>
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">MRR @ 5</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">92.9%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:92%"></div>
+          </div>
+          <div class="metric-target">Target: min 75%</div>
+        </div>
+        <div class="metric-card card-fail">
+          <div class="metric-header">
+            <span class="metric-label">Context Precision @ 5</span>
+            <span class="badge badge-fail">FAIL</span>
+          </div>
+          <div class="metric-value">66.8%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:66%"></div>
+          </div>
+          <div class="metric-target">Target: min 70%</div>
+        </div>
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Context Recall</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">100.0%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:100%"></div>
+          </div>
+          <div class="metric-target">Target: min 80%</div>
+        </div>
+        <div class="metric-card card-fail">
+          <div class="metric-header">
+            <span class="metric-label">Error Code Routing</span>
+            <span class="badge badge-fail">FAIL</span>
+          </div>
+          <div class="metric-value">61.1%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:61%"></div>
+          </div>
+          <div class="metric-target">Target: min 90%</div>
+        </div>
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Escalation Routing</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">100.0%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:100%"></div>
+          </div>
+          <div class="metric-target">Target: min 90%</div>
+        </div>
+        </div>
+      </div>
+      <div class="group-section">
+        <h3 class="group-title">Generation</h3>
+        <div class="metric-grid">
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Faithfulness</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">92.6%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:92%"></div>
+          </div>
+          <div class="metric-target">Target: min 90%</div>
+        </div>
+        <div class="metric-card card-fail">
+          <div class="metric-header">
+            <span class="metric-label">Answer Relevancy</span>
+            <span class="badge badge-fail">FAIL</span>
+          </div>
+          <div class="metric-value">66.3%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:66%"></div>
+          </div>
+          <div class="metric-target">Target: min 85%</div>
+        </div>
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Context Precision</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">81.7%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:81%"></div>
+          </div>
+          <div class="metric-target">Target: min 70%</div>
+        </div>
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Context Recall</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">92.2%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:92%"></div>
+          </div>
+          <div class="metric-target">Target: min 80%</div>
+        </div>
+        <div class="metric-card card-fail">
+          <div class="metric-header">
+            <span class="metric-label">Answer Correctness</span>
+            <span class="badge badge-fail">FAIL</span>
+          </div>
+          <div class="metric-value">59.6%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:59%"></div>
+          </div>
+          <div class="metric-target">Target: min 75%</div>
+        </div>
+        </div>
+      </div>
+      <div class="group-section">
+        <h3 class="group-title">System</h3>
+        <div class="metric-grid">
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Citation Accuracy</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">95.7%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:95%"></div>
+          </div>
+          <div class="metric-target">Target: min 90%</div>
+        </div>
+        <div class="metric-card card-pass">
+          <div class="metric-header">
+            <span class="metric-label">Negative Handling</span>
+            <span class="badge badge-pass">PASS</span>
+          </div>
+          <div class="metric-value">100.0%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:100%"></div>
+          </div>
+          <div class="metric-target">Target: min 100%</div>
+        </div>
+        <div class="metric-card card-fail">
+          <div class="metric-header">
+            <span class="metric-label">Hallucination Rate</span>
+            <span class="badge badge-fail">FAIL</span>
+          </div>
+          <div class="metric-value">7.4%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:7%"></div>
+          </div>
+          <div class="metric-target">Target: max 5%</div>
+        </div>
+        </div>
+      </div>
+
+  <div class="section-title" style="margin-top:32px">Test Case Results</div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" onclick="setFilter('error_code', this)">Error Code</button>
+    <button class="filter-btn" onclick="setFilter('symptom', this)">Symptom</button>
+    <button class="filter-btn" onclick="setFilter('triage', this)">Triage</button>
+    <button class="filter-btn" onclick="setFilter('procedure', this)">Procedure</button>
+    <button class="filter-btn" onclick="setFilter('negative', this)">Negative</button>
+    <button class="filter-btn" onclick="setFilter('escalation', this)">Escalation</button>
+    <button class="filter-btn" onclick="setFilter('miss', this)">Misses only</button>
+    <input class="search-box" id="searchBox" placeholder="Search queries..." oninput="renderTable()"/>
+  </div>
+
+  <div class="results-count" id="resultsCount"></div>
+
+  <table class="cases-table" id="casesTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Query</th>
+        <th>Type</th>
+        <th>Expected Pattern</th>
+        <th>Retrieval</th>
+        <th>Retrieved Sources</th>
+      </tr>
+    </thead>
+    <tbody id="casesBody"></tbody>
+  </table>
+</div>
+
+<script>
+const RESULTS = [{"id": "p1_error_code_1", "query": "What does error code 0x00d30003 indicate on DataPower?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_1"], "expected_section_titles": ["Error Signatures"], "ground_truth_answer": "Error 0x00d30003 indicates a connection timeout — the backend accepted the TCP connection but failed to respond within the configured timeout window.", "answer": "`0x00d30003` indicates **Connection timed out** and is listed as a backend connection timeout error, with the likely cause being that the **backend is unresponsive within the timeout threshold**. [Pattern 1 — Backend Connection Timeout | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_9", "section_title": "2. Error Signatures", "score": 0.032522}, {"pattern_id": "Pattern_1", "section_title": "2. Error Signatures", "score": 0.031099}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.016393}, {"pattern_id": "Pattern_10", "section_title": "2. Error Signatures", "score": 0.016129}, {"pattern_id": "Pattern_9", "section_title": "1. Overview", "score": 0.015873}]}, {"id": "p1_error_code_2", "query": "DataPower is returning ETIMEDOUT when connecting to the backend. What does this mean?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_1"], "expected_section_titles": ["Error Signatures"], "ground_truth_answer": "ETIMEDOUT indicates the TCP connection attempt to the backend could not complete, either because the network path is blocked or the backend is overloaded.", "answer": "`ETIMEDOUT` means a **TCP connect timeout**. In the runbook, this is listed as a common error for **Backend Connection Timeout**, with the likely cause being that the **network path is blocked or the backend is overloaded**. [Pattern_1 — Backend Connection Timeout | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_1", "section_title": "2. Error Signatures", "score": 0.032522}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.031099}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.030798}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.2 Timeout Config Mismatch", "score": 0.030769}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.03055}]}, {"id": "p1_symptom_1", "query": "Multiple unrelated backend services started failing with timeouts at the same time. What is the likely cause?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_1", "Pattern_10"], "expected_section_titles": ["5.1 All Backends Timing Out"], "ground_truth_answer": "When multiple unrelated backends fail simultaneously, the root cause is likely a network or infrastructure issue. Check ServiceNow for recent network change records and engage the Network team with the exact timestamp of the first failure.", "answer": "The likely cause is a network or infrastructure issue affecting multiple backends simultaneously, such as a route, firewall, NIC, or proxy problem. This pattern is indicated when multiple unrelated backends fail at the same timestamp and the runbook points to checking network interface errors, reachability, routing, and recent network changes. [Pattern_1 — Backend Connection Timeout | Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)] [Pattern_10 — Network & Infrastructure Failures | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.032522}, {"pattern_id": "Pattern_10", "section_title": "2. Error Signatures", "score": 0.030886}, {"pattern_id": "Pattern_1", "section_title": "6. Common Mistakes to Avoid", "score": 0.030798}, {"pattern_id": "Pattern_1", "section_title": "1. Overview", "score": 0.030777}, {"pattern_id": "Pattern_1", "section_title": "2. Error Signatures", "score": 0.03031}]}, {"id": "p1_triage_1", "query": "A backend connection timeout has occurred. How do I determine the root cause?", "query_type": "triage", "expected_pattern_ids": ["Pattern_1"], "expected_section_titles": ["Triage Decision Tree"], "ground_truth_answer": "First determine whether all backends or only one specific backend is affected. If all backends are timing out, investigate network infrastructure. If only one backend is affected, check whether its health check is passing to distinguish between a timeout configuration issue and a backend outage.", "answer": "For a **backend connection timeout**, the runbook says to use the **triage decision tree** to narrow the root cause:\n\n1. **Check whether the issue affects all backends**. If **YES**, the decision tree points to **5.1 (Network/Infra)**. [Pattern_1 — Backend Connection Timeout | 4. Triage Decision Tree]\n2. If the issue does **not** affect all backends, **check whether the backend health check is passing**. If **YES**, the decision tree points to **5.2 (Timeout Config)**. If **NO**, it points to **5.3 (Backend Down)**. [Pattern_1 — Backend Connection Timeout | 4. Triage Decision Tree]\n\nThe runbook also lists common error signatures that can help identify the likely cause:\n- `0x00d30003` = connection timed out, likely backend unresponsive within timeout threshold. [Pattern_1 — Backend Connection Timeout | 2. Error Signatures]\n- `ETIMEDOUT` = TCP connect timeout, likely network path blocked or backend overloaded. [Pattern_1 — Backend Connection Timeout | 2. Error Signatures]\n- `0x00d30033` = read timeout, likely backend accepted the connection but stalled response. [Pattern_1 — Backend Connection Timeout | 2. Error Signatures]\n- `Backend unavailable` = all nodes in the load balancer group are unhealthy. [Pattern_1 — Backend Connection Timeout | 2. Error Signatures]\n\nIf you want, I can also help you walk through the decision tree step by step using the symptoms you’re seeing.", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_1", "section_title": "1. Overview", "score": 0.032266}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.2 Timeout Config Mismatch", "score": 0.031281}, {"pattern_id": "Pattern_1", "section_title": "2. Error Signatures", "score": 0.03101}, {"pattern_id": "Pattern_1", "section_title": "4. Triage Decision Tree", "score": 0.030886}, {"pattern_id": "Pattern_1", "section_title": "6. Common Mistakes to Avoid", "score": 0.030536}]}, {"id": "p1_procedure_1", "query": "How do I increase the backend connection timeout and configure a retry policy in DataPower?", "query_type": "procedure", "expected_pattern_ids": ["Pattern_1"], "expected_section_titles": ["5.2 Timeout Config Mismatch"], "ground_truth_answer": "Navigate to Objects → Multi-Protocol Gateway → Backend Service, increase the Connect Timeout and Read Timeout values, then click Apply. In Objects → Load Balancer Group, set the Retry Policy to On Error and set Retry Count to 3.", "answer": "Update the backend service timeout by navigating to **Objects → Multi-Protocol Gateway → Backend Service**, locating the affected service, increasing **Connect Timeout** and **Read Timeout**, and clicking **Apply**. [Pattern 1 — Backend Connection Timeout | Troubleshooting: 5.2 Timeout Config Mismatch]\n\nConfigure the retry policy by navigating to **Objects → Load Balancer Group**, setting **Retry Policy** to `On Error`, setting **Retry Count** to `3`, and enabling **Health Check** polling. [Pattern 1 — Backend Connection Timeout | Troubleshooting: 5.2 Timeout Config Mismatch]\n\nThe runbook also lists the recommended timeout values as **Connect Timeout: 60s** and **Read Timeout: 120s**, with **Retry Count: 3** and **Retry Interval: 5s**. [Pattern 1 — Backend Connection Timeout | Troubleshooting: 5.2 Timeout Config Mismatch]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.2 Timeout Config Mismatch", "score": 0.032787}, {"pattern_id": "Pattern_1", "section_title": "1. Overview", "score": 0.031754}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.031281}, {"pattern_id": "Pattern_1", "section_title": "6. Common Mistakes to Avoid", "score": 0.030366}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.02967}]}, {"id": "p1_escalation_1", "query": "A backend timeout issue has persisted for over 30 minutes. Who do I escalate to and what is the SLA?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_1"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Escalate to the DataPower SME Team with a 15-minute response SLA if the issue persists more than 30 minutes. If all backends are timing out, also engage the Network Infrastructure Team immediately.", "answer": "For a backend timeout issue that persists for over 30 minutes, escalate to the **DataPower SME Team** with an SLA of **15 min response**. [Pattern 1 — Backend Connection Timeout | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_1", "section_title": "7. Escalation Matrix", "score": 0.032787}, {"pattern_id": "Pattern_5", "section_title": "7. Escalation Matrix", "score": 0.032258}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.2 Timeout Config Mismatch", "score": 0.030777}, {"pattern_id": "Pattern_8", "section_title": "7. Escalation Matrix", "score": 0.030159}, {"pattern_id": "Pattern_9", "section_title": "7. Escalation Matrix", "score": 0.030077}]}, {"id": "p2_error_code_1", "query": "DataPower is returning DNS_RESOLVE_FAILED when connecting to a backend. What does this mean?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_2"], "expected_section_titles": ["Error Signatures"], "ground_truth_answer": "DNS_RESOLVE_FAILED means DataPower cannot resolve the backend hostname to an IP address. This typically indicates the DNS server is unreachable or the DNS record is missing or incorrect.", "answer": "`DNS_RESOLVE_FAILED` means DataPower failed to resolve the backend hostname to an IP address before establishing the connection. This can happen when the DNS server is unreachable or the DNS record is missing. [Pattern_2 — DNS Resolution Failure | 2. Error Signatures]\n\nIf the issue is DataPower-specific, the runbook recommends checking DataPower DNS server configuration, static host entries, flushing the DNS cache, and verifying DNS reachability from DataPower. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.2 DataPower DNS Configuration Issue]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.2 DataPower DNS Configuration Issue", "score": 0.032266}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.1 DNS Record Missing or Incorrect", "score": 0.032266}, {"pattern_id": "Pattern_2", "section_title": "1. Overview", "score": 0.031754}, {"pattern_id": "Pattern_2", "section_title": "2. Error Signatures", "score": 0.031754}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.3 DNS Server Infrastructure Issue", "score": 0.030769}]}, {"id": "p2_error_code_2", "query": "What does NXDOMAIN mean when DataPower attempts to connect to a backend hostname?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_2"], "expected_section_titles": ["Error Signatures"], "ground_truth_answer": "NXDOMAIN means the hostname does not exist in DNS — the record was deleted, renamed, or misspelled. This commonly follows a backend migration or hostname rename.", "answer": "`NXDOMAIN` means **Non-existent domain** and indicates the backend hostname is not resolvable in DNS. In this runbook, it is listed as a common DNS resolution failure error where the likely cause is that the **hostname was deleted or misspelled**. [Pattern_2 — DNS Resolution Failure | 2. Error Signatures]\n\nIf the hostname fails to resolve externally as well, the runbook points to checking for a missing or incorrect DNS record, including verifying the A/CNAME record with the DNS / Infrastructure team. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_2", "section_title": "1. Overview", "score": 0.032787}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.1 DNS Record Missing or Incorrect", "score": 0.032002}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.2 DataPower DNS Configuration Issue", "score": 0.031754}, {"pattern_id": "Pattern_2", "section_title": "2. Error Signatures", "score": 0.031498}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.029631}]}, {"id": "p2_symptom_1", "query": "A backend connection stopped working after the backend was migrated to a new server. What should I check?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_2"], "expected_section_titles": ["5.1 DNS Record Missing or Incorrect"], "ground_truth_answer": "After a backend migration, DNS resolution may fail if the hostname was renamed and the DNS record was not updated. Run nslookup from an ops workstation to confirm whether the record exists, and check ServiceNow for recent backend migration change records.", "answer": "This matches the DNS resolution failure and backend URL misconfiguration patterns. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect] [Pattern_5 — Routing & Service Configuration Errors | Troubleshooting: 5.4 Backend URL Misconfiguration]\n\nWhat to check:\n- Run `nslookup <hostname>` from an ops workstation to confirm whether the record exists externally. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect]\n- Check ServiceNow for recent backend migration or rename change records. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect]\n- Contact the DNS / Infrastructure team to verify the A/CNAME record. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect]\n- If the hostname changed, update the DataPower backend service URL. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect]\n- If the record is missing, raise a DNS provisioning request. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect]\n- After the DNS fix, test via the DataPower Probe tool. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.1 DNS Record Missing or Incorrect]\n\nAlso verify the backend URL in the service configuration:\n- Check that the backend hostname is not an old or stale value. [Pattern_5 — Routing & Service Configuration Errors | Troubleshooting: 5.4 Backend URL Misconfiguration]\n- Verify the backend port, protocol, and URL path prefix are correct. [Pattern_5 — Routing & Service Configuration Errors | Troubleshooting: 5.4 Backend URL Misconfiguration]\n- Test the backend URL directly from an ops workstation and re-test via Probe after correction. [Pattern_5 — Routing & Service Configuration Errors | Troubleshooting: 5.4 Backend URL Misconfiguration]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.1 DNS Record Missing or Incorrect", "score": 0.030679}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.2 Timeout Config Mismatch", "score": 0.030579}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.3 Backend Service Down", "score": 0.030415}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.4 Backend URL Misconfiguration", "score": 0.016393}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.2 DataPower DNS Configuration Issue", "score": 0.016129}]}, {"id": "p2_procedure_1", "query": "How do I flush the DNS cache on DataPower?", "query_type": "procedure", "expected_pattern_ids": ["Pattern_2"], "expected_section_titles": ["5.2 DataPower DNS Configuration Issue"], "ground_truth_answer": "Navigate to Status → DNS Cache and click Flush to clear all cached DNS records, then re-test the backend connection.", "answer": "To flush the DNS cache on DataPower, go to **Status → DNS Cache** and click **Flush** to clear cached records, then re-test the backend connection. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.2 DataPower DNS Configuration Issue]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.2 DataPower DNS Configuration Issue", "score": 0.032787}, {"pattern_id": "Pattern_2", "section_title": "6. Common Mistakes to Avoid", "score": 0.032258}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.1 DNS Record Missing or Incorrect", "score": 0.031258}, {"pattern_id": "Pattern_2", "section_title": "1. Overview", "score": 0.030777}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.2 Memory Exhaustion", "score": 0.030366}]}, {"id": "p2_escalation_1", "query": "DNS resolution is failing for multiple backends simultaneously. Who do I contact and what is the SLA?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_2"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Escalate to the Network Infrastructure Team with a 15-minute response SLA. If multiple services are impacted, initiate an immediate P1 incident bridge.", "answer": "For **multiple backends failing simultaneously**, the runbook says to **escalate to the Incident Bridge — P1 escalation immediately**. [Pattern_2 — DNS Resolution Failure | 7. Escalation Matrix]\n\nIf the issue is specifically a **DNS server infrastructure failure**, escalate to the **Network Infrastructure Team** with a **15 min response SLA**. [Pattern_2 — DNS Resolution Failure | 7. Escalation Matrix]\n\nThe symptoms for this pattern also note that **multiple unrelated backends failing simultaneously** can indicate a **DNS server infrastructure issue**. [Pattern_2 — DNS Resolution Failure | Troubleshooting: 5.3 DNS Server Infrastructure Issue]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.3 DNS Server Infrastructure Issue", "score": 0.032522}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.1 DNS Record Missing or Incorrect", "score": 0.031514}, {"pattern_id": "Pattern_2", "section_title": "7. Escalation Matrix", "score": 0.031099}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.031025}, {"pattern_id": "Pattern_2", "section_title": "1. Overview", "score": 0.029911}]}, {"id": "p3_error_code_1", "query": "JWT_SIGNATURE_INVALID error is appearing for all requests from one client application. What is the cause?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_3"], "expected_section_titles": ["Error Signatures", "5.1 JWT Signature / Validation Failure"], "ground_truth_answer": "JWT_SIGNATURE_INVALID means the token's cryptographic signature does not match the public key configured in DataPower. This commonly occurs after a signing key rotation when the new public key has not been uploaded to the DataPower Crypto Certificate object and the AAA Policy has not been updated.", "answer": "The runbook indicates this pattern is consistent with a JWT signing key mismatch, often after a key rotation event. Specifically, it lists `JWT_SIGNATURE_INVALID` as a JWT verification failure caused by the wrong signing key or a tampered token, and notes that “Not updating DataPower key after JWT key rotation” can cause all requests to fail with 401. [Pattern_3 — Authentication & Authorization Failures | 2. Error Signatures] [Pattern_3 — Authentication & Authorization Failures | 6. Common Mistakes to Avoid]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.1 JWT Signature / Validation Failure", "score": 0.032787}, {"pattern_id": "Pattern_3", "section_title": "2. Error Signatures", "score": 0.032002}, {"pattern_id": "Pattern_3", "section_title": "1. Overview", "score": 0.03101}, {"pattern_id": "Pattern_6", "section_title": "2. Error Signatures", "score": 0.030159}, {"pattern_id": "Pattern_3", "section_title": "6. Common Mistakes to Avoid", "score": 0.016129}]}, {"id": "p3_error_code_2", "query": "What does TOKEN_EXPIRED in the DataPower logs indicate and how is it resolved?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_3"], "expected_section_titles": ["Error Signatures", "5.2 OAuth Token Failure"], "ground_truth_answer": "TOKEN_EXPIRED means the OAuth access token has passed its configured TTL. Verify the client application is refreshing tokens correctly, check that DataPower's system clock is in sync with the NTP server, and confirm the clock skew tolerance in the AAA Policy is set to at least 300 seconds.", "answer": "`TOKEN_EXPIRED` in the DataPower logs indicates an OAuth token failure where the client is receiving a `401` with `TOKEN_EXPIRED`, typically affecting specific client apps and correlating with long-running sessions. [Pattern_3 — Authentication & Authorization Failures | Troubleshooting: 5.2 OAuth Token Failure (Expired / Invalid)]\n\nResolution steps in the runbook are: verify the exact rejection reason in DataPower AAA logs to confirm the token is expired rather than invalid; check DataPower clock skew under **Status → System → Date/Time** and ensure it matches NTP with acceptable skew under 5 minutes; validate OAuth server connectivity using **Objects → AAA Policy → Token Validation URL** and the **Probe** tool, expecting HTTP 200 from the OAuth server; and review token lifetime settings, including Access Token TTL, Clock Skew Tolerance set to 300s, and the Token Introspection URL being correct and reachable. [Pattern_3 — Authentication & Authorization Failures | Troubleshooting: 5.2 OAuth Token Failure (Expired / Invalid)]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.2 OAuth Token Failure (Expired / Invalid)", "score": 0.032787}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.1 Emergency: Certificate Already Expired", "score": 0.031514}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.2 Memory Exhaustion", "score": 0.030579}, {"pattern_id": "Pattern_3", "section_title": "6. Common Mistakes to Avoid", "score": 0.016129}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.3 Proactive: Backend Client Certificate Renewal (mTLS)", "score": 0.015873}]}, {"id": "p3_error_code_3", "query": "LDAP_BIND_FAILED error is appearing in DataPower logs. What are the likely causes?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_3"], "expected_section_titles": ["Error Signatures", "5.3 LDAP / API Key Authentication Failure"], "ground_truth_answer": "LDAP_BIND_FAILED means DataPower cannot authenticate to the LDAP directory server. Verify the LDAP server hostname, port, bind DN, and password are correct in the AAA Policy, and confirm the LDAP server is reachable from DataPower using the Probe tool.", "answer": "`LDAP_BIND_FAILED` indicates LDAP authentication failed, and the likely causes are LDAP server unreachable or wrong credentials. [Pattern_3 — Authentication & Authorization Failures | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_9", "section_title": "2. Error Signatures", "score": 0.030077}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.029877}, {"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.3 LDAP / API Key Authentication Failure", "score": 0.029877}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.2 DataPower DNS Configuration Issue", "score": 0.016393}, {"pattern_id": "Pattern_3", "section_title": "2. Error Signatures", "score": 0.016393}]}, {"id": "p3_symptom_1", "query": "A client application started receiving HTTP 401 errors after a JWT signing key rotation event. How do I fix this?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_3"], "expected_section_titles": ["5.1 JWT Signature / Validation Failure"], "ground_truth_answer": "Decode the JWT header to find the kid field and confirm the key alias in DataPower matches it. Upload the new public key to Objects → Crypto → Crypto Certificate and update the AAA Policy → JWT Validation to reference the new key alias, then apply and test.", "answer": "This matches **JWT Signature / Validation Failure**. The runbook says the issue can start after a key rotation event and is associated with `HTTP 401`, `JWT_SIGNATURE_INVALID`, or `JWT_DECODE_FAILED` errors. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.1 JWT Signature / Validation Failure]\n\nFix steps from the runbook: capture the failing JWT from request logs, decode the JWT payload to inspect claims and algorithm, confirm the DataPower key alias matches the JWT `kid` header, upload the new public key to **Crypto Certificate** if the key was rotated, update **AAA Policy → JWT Validation** to reference the new key, then apply changes and test with a valid fresh token. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.1 JWT Signature / Validation Failure]\n\nThe runbook also notes that not updating the DataPower key after JWT key rotation causes all requests to fail with 401. [Pattern 3 — Authentication & Authorization Failures | 6. Common Mistakes to Avoid]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.1 JWT Signature / Validation Failure", "score": 0.032787}, {"pattern_id": "Pattern_3", "section_title": "6. Common Mistakes to Avoid", "score": 0.031514}, {"pattern_id": "Pattern_3", "section_title": "2. Error Signatures", "score": 0.031281}, {"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.1 Rate Limit Exceeded (HTTP 429)", "score": 0.029911}, {"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.2 OAuth Token Failure (Expired / Invalid)", "score": 0.015873}]}, {"id": "p3_triage_1", "query": "A client authenticates successfully but receives HTTP 403 on specific endpoints. How should I diagnose this?", "query_type": "triage", "expected_pattern_ids": ["Pattern_3"], "expected_section_titles": ["Triage Decision Tree", "5.4 Authorization Policy Denial"], "ground_truth_answer": "HTTP 403 after successful authentication indicates an authorization failure. Review the AAA Authorization policy for the failing endpoint's role-to-resource mapping and verify the client's token carries the required OAuth scope or role claim.", "answer": "This matches **Authorization Policy Denial (HTTP 403)**. The runbook says the key symptom is that the client **authenticates successfully (no 401) but gets 403**, and that it may affect **specific endpoints or methods** such as POST/DELETE. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n\nDiagnose it by following the checklist: [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n\n1. **Confirm client identity from DataPower logs** to determine which user or role authenticated. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n2. **Review the AAA Authorization policy** under **Objects → AAA Policy → Authorization**. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n3. **Check role-to-resource mapping** for the failing endpoint. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n4. **Verify the client’s token/credentials carry the required scope or role claim**. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n5. If the **scope is missing**, the client application must **request the correct OAuth scope**. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n6. If the **role mapping is incorrect**, **update the Authorization policy and apply**. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n7. **Test with a token carrying the correct scope/role**. [Pattern 3 — Authentication & Authorization Failures | Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)]\n\nThe runbook also notes that **HTTP 403 means a valid identity but insufficient permissions**. [Pattern 3 — Authentication & Authorization Failures | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)", "score": 0.032787}, {"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.2 OAuth Token Failure (Expired / Invalid)", "score": 0.031281}, {"pattern_id": "Pattern_3", "section_title": "2. Error Signatures", "score": 0.030777}, {"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)", "score": 0.030579}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.03009}]}, {"id": "p3_escalation_1", "query": "The LDAP server is down and all users are unable to authenticate. Who do I escalate to?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_3"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Escalate immediately to the Directory Services Team with a 15-minute response SLA. If the issue persists beyond 30 minutes, also engage the DataPower SME Team.", "answer": "Escalate to the **Directory Services Team** for **LDAP server down affecting all users**. [Pattern_3 — Authentication & Authorization Failures | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_3", "section_title": "7. Escalation Matrix", "score": 0.032522}, {"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.3 LDAP / API Key Authentication Failure", "score": 0.032522}, {"pattern_id": "Pattern_3", "section_title": "2. Error Signatures", "score": 0.030366}, {"pattern_id": "Pattern_2", "section_title": "7. Escalation Matrix", "score": 0.030331}, {"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.4 Authorization Policy Denial (HTTP 403)", "score": 0.03009}]}, {"id": "p4_error_code_1", "query": "DataPower is returning JSON_PARSE_ERROR for requests to a specific service. What should I do?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_4"], "expected_section_titles": ["Error Signatures", "5.1 JSON / XML Parse Error"], "ground_truth_answer": "JSON_PARSE_ERROR means the request or response payload contains invalid JSON syntax. Enable the DataPower Probe tool to capture the raw payload, run it through a JSON validator to identify the syntax error, and determine whether the malformed payload originates from the client application or the backend service.", "answer": "Enable **Probe** on the failing service to capture the raw request payload, then extract the payload and run it through a JSON validator to locate the syntax error. [Pattern_4 — Message Transformation & Parsing Errors | Troubleshooting: 5.1 JSON / XML Parse Error]\n\nConfirm whether the error is in the **request** or the **response**. If it is the client payload, notify the client application team with the error line/column. If it is the backend response, raise a defect with the backend application team. [Pattern_4 — Message Transformation & Parsing Errors | Troubleshooting: 5.1 JSON / XML Parse Error]\n\nAs an interim measure, consider adding a **Validate** action to return a clearer HTTP 400 to the client. [Pattern_4 — Message Transformation & Parsing Errors | Troubleshooting: 5.1 JSON / XML Parse Error]\n\nCommonly, `JSON_PARSE_ERROR` indicates invalid JSON syntax and may present as HTTP 400. [Pattern_4 — Message Transformation & Parsing Errors | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.032787}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.032002}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.031498}, {"pattern_id": "Pattern_4", "section_title": "2. Error Signatures", "score": 0.031281}, {"pattern_id": "Pattern_5", "section_title": "2. Error Signatures", "score": 0.029631}]}, {"id": "p4_error_code_2", "query": "XSLT_TRANSFORM_FAILED error appeared in DataPower logs after a stylesheet deployment. What should I check?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_4"], "expected_section_titles": ["Error Signatures", "5.2 XSLT Transformation Failure"], "ground_truth_answer": "XSLT_TRANSFORM_FAILED indicates a runtime error in the stylesheet, commonly caused by accessing a null node without a guard, a missing namespace declaration, or an XPath version mismatch. Identify the failing stylesheet in the service's Request Rule and test it against the captured payload using Probe → Test Stylesheet.", "answer": "Check the failing stylesheet and the transform action in the service request rule. The runbook says to navigate to **Objects → Multi-Protocol Gateway → [Service] → Request Rule**, locate the failing **Transform** action, and note the stylesheet filename. [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\nThen review the stylesheet for common runtime issues: null node references, XPath version mismatch, and missing namespace declarations. [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\nBecause the issue started after a stylesheet deployment, also compare the deployed stylesheet for any hardcoded values that may have changed. [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\nUse **Probe** on the service, capture the failing message, and run **Probe → Test Stylesheet** against the captured payload to reproduce the failure. [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\nIf the issue is a null node reference, add an `if` check before accessing optional nodes; if it is a namespace error, declare the missing namespace in the stylesheet header; if it is an XPath 2.0 function used in a 1.0 context, use an XSLT 2.0 processor or rewrite the XPath; if hardcoded values changed, update the stylesheet with the correct values. [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.2 XSLT Transformation Failure", "score": 0.032787}, {"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.032002}, {"pattern_id": "Pattern_4", "section_title": "2. Error Signatures", "score": 0.031514}, {"pattern_id": "Pattern_4", "section_title": "1. Overview", "score": 0.030331}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.030331}]}, {"id": "p4_symptom_1", "query": "A service is returning HTTP 500 with a JavaScript stack trace in the DataPower logs. What is the cause?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_4"], "expected_section_titles": ["5.3 GatewayScript Exception"], "ground_truth_answer": "This is a GatewayScript exception. Retrieve the full stack trace from the DataPower system logs to identify the failing line number, locate the script in Objects → GatewayScript, and add try/catch blocks around risky operations such as JSON.parse and null property access.", "answer": "The cause matches **GatewayScript Exception**: HTTP 500 with `GWSCRIPT_EXCEPTION`, a JavaScript stack trace in the logs, and failure tied to a specific payload structure or header value indicate a script error in GatewayScript. Common causes include a null reference, undefined variable, or `JSON.parse` on non-JSON. [Pattern_4 — Message Transformation & Parsing Errors | Troubleshooting: 5.3 GatewayScript Exception]\n\n", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.3 GatewayScript Exception", "score": 0.032266}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.032258}, {"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.031545}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.03055}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.030331}]}, {"id": "p4_procedure_1", "query": "How do I debug an XSLT transformation failure on DataPower?", "query_type": "procedure", "expected_pattern_ids": ["Pattern_4"], "expected_section_titles": ["5.2 XSLT Transformation Failure"], "ground_truth_answer": "Navigate to Objects → Multi-Protocol Gateway → [Service] → Request Rule to locate the failing Transform action and note its stylesheet filename. Enable the Probe tool on the service to capture the failing message, then use Probe → Test Stylesheet to run the stylesheet against the captured payload and observe the error.", "answer": "For an XSLT transformation failure, the runbook recommends this sequence:\n\n1. Identify the failing stylesheet by going to **Objects → Multi-Protocol Gateway → [Service] → Request Rule**, then locate the **Transform** action and note the stylesheet filename. [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\n2. Check the stylesheet for runtime errors by opening **Objects → Stylesheet → [Stylesheet Name]** and reviewing it for:\n   - null node references\n   - XPath version mismatch\n   - missing namespace declarations [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\n3. Enable **Probe** on the service, capture the failing message, and use **Probe → Test Stylesheet** to run the stylesheet against the captured payload. [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\n4. Apply the fix based on the issue found:\n   - add an `if` check for null node references\n   - declare missing namespaces in the stylesheet header\n   - use an XSLT 2.0 processor or rewrite XPath if XPath 2.0 functions are used in a 1.0 context\n   - update hardcoded values if they changed [Pattern 4 — Message Transformation & Parsing Errors | Troubleshooting: 5.2 XSLT Transformation Failure]\n\nThe runbook also notes that XSLT runtime errors commonly present as **HTTP 500** or **XSLT_TRANSFORM_FAILED**, and may be triggered by a logic error or null node in the transformation. [Pattern 4 — Message Transformation & Parsing Errors | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.2 XSLT Transformation Failure", "score": 0.032002}, {"pattern_id": "Pattern_4", "section_title": "1. Overview", "score": 0.032002}, {"pattern_id": "Pattern_4", "section_title": "2. Error Signatures", "score": 0.031319}, {"pattern_id": "Pattern_4", "section_title": "7. Escalation Matrix", "score": 0.030769}, {"pattern_id": "Pattern_4", "section_title": "6. Common Mistakes to Avoid", "score": 0.029644}]}, {"id": "p4_escalation_1", "query": "A schema validation failure requires an API contract update. Who is responsible and what is the timeline?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_4"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Schema changes that require an API contract update should be escalated to the API Governance Team, following the per-release-cycle SLA.", "answer": "A schema change that requires an API contract update should be escalated to the **API Governance Team**. The timeline is **per release cycle**. [Pattern_4 — Message Transformation & Parsing Errors | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.4 Schema Validation Failure", "score": 0.032787}, {"pattern_id": "Pattern_4", "section_title": "7. Escalation Matrix", "score": 0.032258}, {"pattern_id": "Pattern_4", "section_title": "6. Common Mistakes to Avoid", "score": 0.03055}, {"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.1 JWT Signature / Validation Failure", "score": 0.030118}, {"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.4 Payload Size Limit Exceeded (HTTP 413)", "score": 0.02967}]}, {"id": "p5_error_code_1", "query": "DataPower is returning HTTP 404 for all requests to a specific service. What does this mean?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_5"], "expected_section_titles": ["Error Signatures", "5.1 No Route Matched"], "ground_truth_answer": "HTTP 404 from DataPower before reaching the backend means no URL mapping matches the incoming request path or HTTP method. Check the Multi-Protocol Gateway URL Map and confirm both the request path pattern and HTTP method are covered.", "answer": "This indicates **no matching route/service mapping** for that request: `HTTP 404` is listed as **Service not found**, with the likely cause **no matching service or URL mapping**. [Pattern_5 — Routing & Service Configuration Errors | 2. Error Signatures]\n\nFor the specific symptom of **all requests to a specific URL returning 404**, the runbook says to check whether the request path matches a defined pattern in the **URL Map**, and to verify the **HTTP Method** filter and **Front Side Handler port**. [Pattern_5 — Routing & Service Configuration Errors | Troubleshooting: 5.1 No Route Matched (HTTP 404)]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.032787}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.032002}, {"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.032002}, {"pattern_id": "Pattern_5", "section_title": "2. Error Signatures", "score": 0.03125}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.029857}]}, {"id": "p5_error_code_2", "query": "SERVICE_DISABLED error code is appearing in DataPower logs. How do I resolve it?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_5"], "expected_section_titles": ["Error Signatures", "5.2 Service Disabled"], "ground_truth_answer": "SERVICE_DISABLED means the Multi-Protocol Gateway or Front Side Handler has been administratively disabled. Navigate to Objects → Multi-Protocol Gateway → [Service Name], set the Administrative State to Enabled, and click Apply.", "answer": "`SERVICE_DISABLED` indicates the service is disabled in DataPower. [Pattern 5 — Routing & Service Configuration Errors | 2. Error Signatures]\n\nTo resolve it, the runbook says to check the MPGW service state and set the **Administrative State** to **Enabled** if it is disabled, then click **Apply**. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\nAlso check the front side handler state and confirm its **Administrative State** is **Enabled** and the correct **Port** is configured and bound. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\nVerify the application domain is **Up** in **Control Panel → Domain Status**. If the domain is down, investigate the domain-level error before re-enabling. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\nFinally, verify the load balancer group has at least one member in **Active** state and re-enable disabled members if the backend is healthy. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_5", "section_title": "2. Error Signatures", "score": 0.032522}, {"pattern_id": "Pattern_9", "section_title": "2. Error Signatures", "score": 0.03125}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.2 Service Disabled (HTTP 503)", "score": 0.030536}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.016393}, {"pattern_id": "Pattern_2", "section_title": "2. Error Signatures", "score": 0.016129}]}, {"id": "p5_symptom_1", "query": "A service was recently deployed and all requests are returning 503 immediately without reaching the backend.", "query_type": "symptom", "expected_pattern_ids": ["Pattern_5"], "expected_section_titles": ["5.2 Service Disabled"], "ground_truth_answer": "A 503 immediately after deployment typically indicates the service was left in a disabled state. Check the MPGW Administrative State, the Front Side Handler state, and the domain state, and confirm at least one Load Balancer Group member is Active.", "answer": "This matches **Pattern_5 — Service Disabled (HTTP 503)** because the symptoms include requests returning 503 immediately without reaching the backend, and it may follow a deployment or maintenance window. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\nCheck the following in order: [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\n1. **MPGW Service State**  \n   Navigate to **Objects → Multi-Protocol Gateway → [Service Name]** and confirm **Administrative State** is `Enabled`; if disabled, set it to `Enabled` and click **Apply**. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\n2. **Front Side Handler State**  \n   Navigate to **Objects → HTTP Front Side Handler → [Handler Name]** and confirm **Administrative State** is `Enabled`, and that the correct **Port** is configured and bound. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\n3. **Domain State**  \n   Navigate to **Control Panel → Domain Status** and confirm the application domain is `Up`; if the domain is down, investigate the domain-level error before re-enabling. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]\n\n4. **Load Balancer Group Members**  \n   Navigate to **Objects → Load Balancer Group → [Group Name]** and confirm at least one member is in `Active` state; re-enable disabled members if the backend is healthy. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.2 Service Disabled (HTTP 503)]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.4 Backend URL Misconfiguration", "score": 0.032522}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.2 Service Disabled (HTTP 503)", "score": 0.032522}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.031746}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.030536}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.3 Backend Service Down", "score": 0.015625}]}, {"id": "p5_triage_1", "query": "DataPower is returning HTTP 502 Bad Gateway. How should I triage this?", "query_type": "triage", "expected_pattern_ids": ["Pattern_5"], "expected_section_titles": ["Triage Decision Tree", "5.3 Bad Gateway"], "ground_truth_answer": "HTTP 502 means the request reached DataPower and was forwarded, but the backend returned an unexpected or malformed response. Enable the Probe tool to capture the raw backend response, check backend application logs for the error context, and confirm the backend URL and protocol in the service config are correct.", "answer": "For HTTP 502 Bad Gateway, the runbook says the request reaches DataPower and is forwarded to the backend, but the backend returns an unexpected or malformed response, so DataPower cannot parse it and returns 502 to the client. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]\n\nTriage steps:\n1. Enable **Probe** on the failing service to capture the backend response. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]\n2. Inspect the raw backend response in the Probe capture to identify whether it is malformed. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]\n3. Check backend application logs for error context. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]\n4. Confirm the backend URL in the service config is correct. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]\n5. Confirm the backend protocol matches the service config, HTTP vs HTTPS. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]\n\nIf the backend is returning 5xx, escalate to the backend application team. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]\n\nIf the response format changed, update the transformation to handle the new format. [Pattern 5 — Routing & Service Configuration Errors | Troubleshooting: 5.3 Bad Gateway (HTTP 502)]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.032787}, {"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.031281}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.03125}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.029644}, {"pattern_id": "Pattern_5", "section_title": "2. Error Signatures", "score": 0.016129}]}, {"id": "p5_escalation_1", "query": "A service was disabled by an unknown change. Who should I contact?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_5"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Raise a Change Management investigation with a 1-hour SLA. If multiple services are impacted, escalate to the P1 incident bridge immediately.", "answer": "Contact **Change Management Investigation**. The escalation matrix says **“Service disabled by unknown change” → “Change Management Investigation”** with an SLA of **1 hour**. [Pattern 5 — Routing & Service Configuration Errors | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_5", "section_title": "7. Escalation Matrix", "score": 0.032787}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.1 Network Change Impact", "score": 0.032002}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.2 Service Disabled (HTTP 503)", "score": 0.031054}, {"pattern_id": "Pattern_10", "section_title": "4. Triage Decision Tree", "score": 0.029412}, {"pattern_id": "Pattern_5", "section_title": "6. Common Mistakes to Avoid", "score": 0.015873}]}, {"id": "p6_error_code_1", "query": "A client is receiving HTTP 429 Too Many Requests from DataPower. What does this mean and how is it resolved?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_6"], "expected_section_titles": ["Error Signatures", "5.1 Rate Limit Exceeded"], "ground_truth_answer": "HTTP 429 indicates the consumer has exceeded their configured rate limit quota. Identify the consumer from request logs via the API key or client ID, review the Rate Limit Policy limits against the client's legitimate traffic volume, and raise a governance change request if the limit needs adjustment.", "answer": "HTTP 429 Too Many Requests indicates a **rate limit exceeded** condition, typically affecting a specific client app or consumer group and often spiking at peak traffic or at regular intervals. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.1 Rate Limit Exceeded (HTTP 429)]\n\nResolution steps in the runbook are: identify the consumer identity from request logs, review the current rate limit policy, compare the configured limit with the client’s legitimate traffic volume, and then either have the client reduce request frequency or raise a change request to adjust the limit through API governance. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.1 Rate Limit Exceeded (HTTP 429)]\n\nIf the traffic is a legitimate burst such as a batch job or event-driven spike, the runbook says to consider adding a burst allowance for scheduled jobs. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.1 Rate Limit Exceeded (HTTP 429)]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.031281}, {"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.1 Rate Limit Exceeded (HTTP 429)", "score": 0.030769}, {"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.030579}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.03055}, {"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)", "score": 0.03055}]}, {"id": "p6_error_code_2", "query": "IP_NOT_WHITELISTED error is blocking a new client integration. How do I resolve this?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_6"], "expected_section_titles": ["Error Signatures", "5.2 IP Not Whitelisted"], "ground_truth_answer": "IP_NOT_WHITELISTED means the source IP is not in the DataPower IP Allowlist policy. Confirm the correct egress IP — traffic passing through a proxy may show the proxy IP, not the original client IP. Raise a ServiceNow change request to add the IP after Security team approval.", "answer": "This is an **IP allowlist enforcement** issue. The runbook says `HTTP 403` / `IP_NOT_WHITELISTED` means the source IP is blocked by the IP allowlist. [Pattern 6 — Security Policy Violations | 2. Error Signatures]\n\n### Resolution\n1. **Identify the blocked IP** by extracting `client_ip` from DataPower access logs and confirm it is the legitimate source, not a NAT IP behind a load balancer. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n2. **Review the current IP allowlist** under **Objects → IP Allowlist → [Policy Name]** and check whether the client IP or CIDR range is present. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n3. If the IP is legitimate, **raise a firewall/allowlist change request via ServiceNow**, obtain **Security team approval**, then **add the IP/CIDR to the allowlist object** and **apply changes**. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n4. **Verify NAT / proxy IPs**: confirm whether traffic passes through a load balancer or proxy, since the DataPower-visible IP may be the proxy IP rather than the original client IP. Obtain the correct egress IP from the client’s network team. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n\n### Important note\nFor a **new client integration**, the runbook also warns that allowlist changes require **Security approval** and should not use overly broad CIDR ranges. [Pattern 6 — Security Policy Violations | 6. Common Mistakes to Avoid]\n\n", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)", "score": 0.032787}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.3 Proactive: Backend Client Certificate Renewal (mTLS)", "score": 0.028778}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.016129}, {"pattern_id": "Pattern_6", "section_title": "2. Error Signatures", "score": 0.016129}, {"pattern_id": "Pattern_6", "section_title": "6. Common Mistakes to Avoid", "score": 0.015873}]}, {"id": "p6_symptom_1", "query": "All requests from a specific IP address are being blocked by DataPower with HTTP 403. How do I investigate?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_6"], "expected_section_titles": ["5.2 IP Not Whitelisted"], "ground_truth_answer": "Extract the client_ip from DataPower access logs and check it against the IP Allowlist object in Objects → IP Allowlist. Verify whether the IP is the actual client or a NAT/proxy egress IP, then raise a firewall/allowlist change request with Security team approval to add the IP.", "answer": "This matches **IP allowlist enforcement** under Security Policy Violations. The runbook says HTTP 403 with “IP not whitelisted” / `IP_NOT_WHITELISTED` indicates the source IP is blocked by the IP allowlist. [Pattern 6 — Security Policy Violations | 2. Error Signatures]\n\nTo investigate:\n\n1. **Identify the blocked IP** by extracting `client_ip` from DataPower access logs. Confirm it is the legitimate source and not a NAT IP behind a load balancer. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n2. **Review the current IP allowlist** in **Objects → IP Allowlist → [Policy Name]** and check whether the client IP or CIDR range is present. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n3. **Verify NAT / proxy behavior** to confirm whether DataPower is seeing a proxy or load balancer IP instead of the original client IP, and obtain the correct egress IP from the client’s network team if needed. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n4. If the IP is legitimate, **raise a firewall/allowlist change request via ServiceNow**, obtain Security approval, add the IP/CIDR to the allowlist object, and apply the changes. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n\nIf you want, I can also help you turn this into a short incident checklist using only the runbook steps.", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)", "score": 0.032787}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.032258}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.03125}, {"pattern_id": "Pattern_6", "section_title": "2. Error Signatures", "score": 0.030536}, {"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.029211}]}, {"id": "p6_procedure_1", "query": "What is the process for adding an IP address to the DataPower allowlist?", "query_type": "procedure", "expected_pattern_ids": ["Pattern_6"], "expected_section_titles": ["5.2 IP Not Whitelisted"], "ground_truth_answer": "Navigate to Objects → IP Allowlist → [Policy Name], raise a ServiceNow change request for the allowlist update, obtain Security team approval, then add the IP or CIDR range to the allowlist object and apply. Always use /32 precision IPs where possible rather than broad CIDR ranges.", "answer": "The runbook describes this as an **IP Not Whitelisted (HTTP 403)** security policy violation. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n\nProcess:  \n1. **Identify the blocked IP** by extracting `client_ip` from DataPower access logs and confirming it is the legitimate source, not a NAT IP behind a load balancer. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]  \n2. **Review the current IP allowlist** under **Objects → IP Allowlist → [Policy Name]** and check whether the client IP or CIDR range is already present. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]  \n3. If the IP is legitimate, **raise a firewall/allowlist change request via ServiceNow**, obtain **Security team approval**, then **add the IP/CIDR to the allowlist object** and **apply changes**. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]  \n4. **Verify NAT / proxy IPs** by confirming whether traffic passes through a load balancer or proxy, since the DataPower-visible IP may be the proxy IP rather than the original client IP; obtain the correct egress IP from the client’s network team. [Pattern 6 — Security Policy Violations | Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)]\n\nAll allowlist changes require Security approval. [Pattern 6 — Security Policy Violations | 6. Common Mistakes to Avoid]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)", "score": 0.032787}, {"pattern_id": "Pattern_6", "section_title": "1. Overview", "score": 0.030536}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.3 Proactive: Backend Client Certificate Renewal (mTLS)", "score": 0.030118}, {"pattern_id": "Pattern_6", "section_title": "6. Common Mistakes to Avoid", "score": 0.030077}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.016129}]}, {"id": "p6_escalation_1", "query": "A threat protection rule has detected a possible attack pattern. Who do I notify?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_6"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Escalate immediately to the Security Operations Center (SOC). If multiple services appear to be under a coordinated attack, also engage the Incident Commander immediately.", "answer": "If the threat protection detection is a **genuine threat / attack pattern**, notify the **Security Operations Center (SOC)** immediately. [Pattern_6 — Security Policy Violations | 7. Escalation Matrix]\n\nIf it is a **false positive**, the runbook says to **review pattern specificity in the Threat Protection Policy** and **narrow the matching pattern**; it does not specify a separate notification target for that case. [Pattern_6 — Security Policy Violations | Troubleshooting: 5.3 Threat Protection Triggered (HTTP 400)]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.3 Threat Protection Triggered (HTTP 400)", "score": 0.032787}, {"pattern_id": "Pattern_6", "section_title": "7. Escalation Matrix", "score": 0.031746}, {"pattern_id": "Pattern_6", "section_title": "4. Triage Decision Tree", "score": 0.031514}, {"pattern_id": "Pattern_6", "section_title": "2. Error Signatures", "score": 0.031514}, {"pattern_id": "Pattern_6", "section_title": "6. Common Mistakes to Avoid", "score": 0.03125}]}, {"id": "p8_error_code_1", "query": "CERTIFICATE_EXPIRED error is causing SSL handshake failures on a DataPower service. What is the immediate action?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_8"], "expected_section_titles": ["Error Signatures", "5.1 Emergency: Certificate Already Expired"], "ground_truth_answer": "CERTIFICATE_EXPIRED causing active handshake failures is a P1 incident. Engage the PKI and Security Team immediately via the incident bridge. Identify the expired certificate from the DataPower logs, obtain a new certificate from PKI, upload it to the Crypto Certificate object, update all SSL Profile references, and apply the configuration.", "answer": "The immediate action is to engage the PKI/Security Team immediately via the incident bridge to open a renewal request. [Pattern_8 — Certificate Expiration Alerts | Troubleshooting: 5.1 Emergency: Certificate Already Expired]\n\nThe runbook also states that `CERTIFICATE_EXPIRED` and `0x80090326` indicate an expired certificate causing SSL handshake failures, with active production failures and all connections through the affected service failing. [Pattern_8 — Certificate Expiration Alerts | Troubleshooting: 5.1 Emergency: Certificate Already Expired] [Pattern_8 — Certificate Expiration Alerts | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.1 Emergency: Certificate Already Expired", "score": 0.032787}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.3 Proactive: Backend Client Certificate Renewal (mTLS)", "score": 0.032002}, {"pattern_id": "Pattern_8", "section_title": "2. Error Signatures", "score": 0.030835}, {"pattern_id": "Pattern_8", "section_title": "1. Overview", "score": 0.030077}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.4 Proactive: CA / Intermediate Certificate Renewal", "score": 0.015873}]}, {"id": "p8_error_code_2", "query": "DataPower is showing a CERTIFICATE_EXPIRY_WARNING for a service. What action should I take?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_8"], "expected_section_titles": ["Error Signatures", "5.2 Proactive: Frontend Server Certificate Renewal"], "ground_truth_answer": "CERTIFICATE_EXPIRY_WARNING is a proactive alert before the certificate expires. Identify the certificate in Objects → Crypto → Crypto Certificate, obtain a CSR, and submit a renewal request to the PKI team via ServiceNow. The standard SLA for certificate renewal is 4 hours.", "answer": "No relevant runbook found for this query. The available runbooks cover incident troubleshooting patterns only.", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.1 Emergency: Certificate Already Expired", "score": 0.032002}, {"pattern_id": "Pattern_8", "section_title": "2. Error Signatures", "score": 0.031319}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.3 Proactive: Backend Client Certificate Renewal (mTLS)", "score": 0.031025}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.4 Proactive: CA / Intermediate Certificate Renewal", "score": 0.030679}, {"pattern_id": "Pattern_8", "section_title": "1. Overview", "score": 0.03009}]}, {"id": "p8_symptom_1", "query": "All connections through a specific DataPower service are failing with SSL handshake errors. What is the likely cause?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_8"], "expected_section_titles": ["5.1 Emergency: Certificate Already Expired"], "ground_truth_answer": "SSL handshake failures across all connections on a service typically indicate an expired certificate. Check DataPower logs for CERTIFICATE_EXPIRED or error code 0x80090326, identify the affected certificate alias, and initiate emergency renewal via the PKI team.", "answer": "The likely cause is an expired certificate causing SSL handshake failure. The runbook lists `0x80090326` as “SSL handshake failed” and `CERTIFICATE_EXPIRED` as a symptom of active production failures where all connections through the affected service fail. [Pattern_8 — Certificate Expiration Alerts | 2. Error Signatures] [Pattern_8 — Certificate Expiration Alerts | Troubleshooting: 5.1 Emergency: Certificate Already Expired]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.030835}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.1 Emergency: Certificate Already Expired", "score": 0.030777}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.016393}, {"pattern_id": "Pattern_8", "section_title": "2. Error Signatures", "score": 0.016393}, {"pattern_id": "Pattern_10", "section_title": "2. Error Signatures", "score": 0.016129}]}, {"id": "p8_procedure_1", "query": "How do I renew a backend mTLS client certificate on DataPower?", "query_type": "procedure", "expected_pattern_ids": ["Pattern_8"], "expected_section_titles": ["5.3 Proactive: Backend Client Certificate Renewal"], "ground_truth_answer": "Contact the backend service team to confirm they expect a new client certificate. Generate a new key pair and CSR, submit to enterprise PKI via ServiceNow, upload the new certificate and private key to DataPower Crypto Key and Crypto Certificate objects, update the SSL Client Profile to reference the new objects, and coordinate the cutover timing with the backend team.", "answer": "To renew a backend mTLS client certificate on DataPower, follow the proactive renewal checklist for backend client certificates: identify the mTLS client certificate used for the affected backend, confirm with the backend service team that they expect a new client cert, generate a new key pair and CSR, submit the CSR to enterprise PKI via ServiceNow, provide the new client certificate to the backend team for allowlist update, upload the new certificate and private key to DataPower **Crypto Key** and **Crypto Certificate**, update the **SSL Client Profile** to reference the new key and cert objects, coordinate cutover timing with the backend team, apply the change in DataPower and test via Probe, and confirm the backend team sees a successful mTLS handshake from the new cert. [Pattern_8 — Certificate Expiration Alerts | Troubleshooting: 5.3 Proactive: Backend Client Certificate Renewal (mTLS)]\n\nIf the certificate is expiring in less than 30 days, the escalation matrix says to escalate to the PKI/Security Team within 1 business day. [Pattern_8 — Certificate Expiration Alerts | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.3 Proactive: Backend Client Certificate Renewal (mTLS)", "score": 0.032787}, {"pattern_id": "Pattern_8", "section_title": "6. Common Mistakes to Avoid", "score": 0.031514}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.4 Proactive: CA / Intermediate Certificate Renewal", "score": 0.031281}, {"pattern_id": "Pattern_8", "section_title": "7. Escalation Matrix", "score": 0.031025}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.1 Emergency: Certificate Already Expired", "score": 0.03101}]}, {"id": "p8_escalation_1", "query": "A production certificate has already expired and services are actively failing. Who do I engage?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_8"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Engage the PKI Team and DataPower SME Team immediately via the P1 incident bridge. The SLA for an already-expired certificate in production is immediate response.", "answer": "Engage the **PKI Team + DataPower SME via the P1 bridge immediately**. The escalation matrix says a certificate already expired in production should be escalated to **PKI Team + DataPower SME (P1 bridge)** with **Immediate** SLA. [Pattern_8 — Certificate Expiration Alerts | 7. Escalation Matrix]\n\nThis matches the emergency response for an already expired certificate causing active production failures. [Pattern_8 — Certificate Expiration Alerts | Troubleshooting: 5.1 Emergency: Certificate Already Expired]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.1 Emergency: Certificate Already Expired", "score": 0.032787}, {"pattern_id": "Pattern_8", "section_title": "7. Escalation Matrix", "score": 0.031514}, {"pattern_id": "Pattern_8", "section_title": "1. Overview", "score": 0.031514}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.4 Proactive: CA / Intermediate Certificate Renewal", "score": 0.03125}, {"pattern_id": "Pattern_8", "section_title": "Troubleshooting: 5.2 Proactive: Frontend Server Certificate Renewal", "score": 0.030579}]}, {"id": "p9_error_code_1", "query": "THREAD_POOL_EXHAUSTED error is appearing in DataPower system logs and services are returning 503. What should I do?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_9"], "expected_section_titles": ["Error Signatures", "5.3 Thread Pool Exhaustion"], "ground_truth_answer": "THREAD_POOL_EXHAUSTED means all DataPower worker threads are occupied. Navigate to Status → System → Thread Pool Status to view active versus maximum threads, identify which service or client is holding threads open, and check backend response times — a slow backend holding threads is the most common cause.", "answer": "This matches **Pattern 9 — DataPower System Resource Exhaustion, Troubleshooting: 5.3 Thread Pool Exhaustion**. The runbook says `THREAD_POOL_EXHAUSTED` with `HTTP 503` indicates the DataPower thread pool is full / no available worker threads. [Pattern 9 — DataPower System Resource Exhaustion | 2. Error Signatures] [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n\nRecommended actions from the runbook:\n1. Check **Status → System → Thread Pool Status** to see active vs max threads. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n2. Identify which service or client is holding threads open. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n3. Check backend response times, since slow backends can hold DataPower threads. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n4. Reduce backend timeout to free stalled threads faster. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n5. Enable connection limits per client in the FSH. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n6. Review the **Workload Management** policy and enable backpressure. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n\nIf all backends are slow, the runbook says to refer to **Pattern 1 (Connection Timeout)**. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n\nRelevant symptoms also include requests queueing with increasing latency before rejection, and correlation with a spike in concurrent connections. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.032522}, {"pattern_id": "Pattern_9", "section_title": "2. Error Signatures", "score": 0.032018}, {"pattern_id": "Pattern_9", "section_title": "4. Triage Decision Tree", "score": 0.031754}, {"pattern_id": "Pattern_9", "section_title": "1. Overview", "score": 0.031746}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.2 Memory Exhaustion", "score": 0.030303}]}, {"id": "p9_error_code_2", "query": "MEMORY_ALLOC_FAILED error is appearing in DataPower logs. What are the steps to investigate?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_9"], "expected_section_titles": ["Error Signatures", "5.2 Memory Exhaustion"], "ground_truth_answer": "MEMORY_ALLOC_FAILED means DataPower cannot allocate additional heap memory. Check Status → System → Memory Usage and Status → Document Cache. Flush the document cache if it is consuming excessive memory. If memory is increasing monotonically without releasing, this indicates a memory leak and requires escalation to the DataPower SME Team.", "answer": "`MEMORY_ALLOC_FAILED` is covered by the **DataPower System Resource Exhaustion** runbook and maps to **Memory Exhaustion**. [Pattern 9 — DataPower System Resource Exhaustion | 2. Error Signatures]\n\nSteps to investigate:\n\n1. **Check memory usage** in **Status → System → Memory Usage** and note heap usage and document cache usage separately. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.2 Memory Exhaustion]\n2. **Identify memory consumers** in **Status → Document Cache** and check for unusually large cached documents. If document cache is consuming excessive memory, flush it via **Status → Document Cache → Flush**. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.2 Memory Exhaustion]\n3. **Check for memory leak indicators**:\n   - memory increasing monotonically without releasing\n   - a DataPower restart temporarily resolving the issue  \n   If yes, the runbook says this indicates a memory leak and to escalate to a DataPower SME. [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.2 Memory Exhaustion]\n4. **Adjust memory settings** as applicable:\n   - Document Cache Size: default 256 MB, tune per traffic, location: System Settings\n   - Max In-Memory Message Size: default 10 MB, reduce if large payloads, location: MPGW Settings\n   - Metadata Cache Size: default 64 MB, monitor and tune, location: XML Manager [Pattern 9 — DataPower System Resource Exhaustion | Troubleshooting: 5.2 Memory Exhaustion]\n\nRelated symptom/signature: `MEMORY_ALLOC_FAILED` indicates memory allocation failure / JVM / heap exhaustion. [Pattern 9 — DataPower System Resource Exhaustion | 2. Error Signatures]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.2 Memory Exhaustion", "score": 0.032787}, {"pattern_id": "Pattern_9", "section_title": "2. Error Signatures", "score": 0.032258}, {"pattern_id": "Pattern_9", "section_title": "6. Common Mistakes to Avoid", "score": 0.015873}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.015873}, {"pattern_id": "Pattern_9", "section_title": "4. Triage Decision Tree", "score": 0.015625}]}, {"id": "p9_symptom_1", "query": "All DataPower services are responding slowly and some are returning 503. What should I check first?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_9"], "expected_section_titles": ["Triage Decision Tree", "5.1 High CPU"], "ground_truth_answer": "When all services degrade simultaneously, suspect DataPower resource exhaustion rather than a backend issue. Open the DataPower System Dashboard and check CPU, memory, and thread pool usage — each resource has a distinct resolution path.", "answer": "Check **Status → System → CPU Usage** first to confirm whether DataPower CPU is sustained above the warning range, since the high-CPU runbook says all services responding slowly with increasing latency across services points to system resource exhaustion. [Pattern_9 — DataPower System Resource Exhaustion | Troubleshooting: 5.1 High CPU]\n\nIf CPU is elevated, next check **Status → Services → Service Statistics** to identify the highest-traffic service and look for an unusual spike in request rate on one service. [Pattern_9 — DataPower System Resource Exhaustion | Troubleshooting: 5.1 High CPU]\n\nIf the 503s are specifically `THREAD_POOL_EXHAUSTED` with queueing/latency before rejection, check **Status → System → Thread Pool Status** to see active vs max threads. [Pattern_9 — DataPower System Resource Exhaustion | Troubleshooting: 5.3 Thread Pool Exhaustion]\n\n", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.032522}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.1 High CPU", "score": 0.032522}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.2 Service Disabled (HTTP 503)", "score": 0.031498}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.031258}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.3 Backend Service Down", "score": 0.029644}]}, {"id": "p9_procedure_1", "query": "How do I identify which service is causing high CPU on DataPower?", "query_type": "procedure", "expected_pattern_ids": ["Pattern_9"], "expected_section_titles": ["5.1 High CPU"], "ground_truth_answer": "Navigate to Status → System → CPU Usage to confirm the current CPU percentage, then navigate to Status → Services → Service Statistics to identify the service with the highest request rate or processing time driving the CPU consumption.", "answer": "To identify which service is causing high CPU on DataPower, the runbook says to first confirm CPU is high in **Status → System → CPU Usage**, then go to **Status → Services → Service Statistics** to identify the highest-traffic service. After that, check for an unusual spike in request rate on one service to pinpoint the anomalous traffic source. [Pattern_9 — DataPower System Resource Exhaustion | Troubleshooting: 5.1 High CPU]\n\nIf the high CPU is sustained across all services rather than one backend, the runbook also notes this pattern is consistent with system resource exhaustion, with CPU > 85% sustained and latency increasing across all services. [Pattern_9 — DataPower System Resource Exhaustion | Troubleshooting: 5.1 High CPU]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.1 High CPU", "score": 0.032787}, {"pattern_id": "Pattern_9", "section_title": "2. Error Signatures", "score": 0.031746}, {"pattern_id": "Pattern_9", "section_title": "6. Common Mistakes to Avoid", "score": 0.031514}, {"pattern_id": "Pattern_9", "section_title": "4. Triage Decision Tree", "score": 0.030835}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.03055}]}, {"id": "p9_escalation_1", "query": "DataPower CPU has been above 90% for 20 minutes and has not reduced after initial mitigation. Who do I involve?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_9"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Escalate to the Capacity and Performance Team with a 30-minute SLA. If DataPower is restarting or crashing, engage the DataPower SME Team and Infrastructure Team immediately.", "answer": "CPU > 90% not reducing after mitigation should be escalated to the **Capacity / Performance Team** with **30 min** SLA. [Pattern_9 — DataPower System Resource Exhaustion | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.1 High CPU", "score": 0.032787}, {"pattern_id": "Pattern_9", "section_title": "7. Escalation Matrix", "score": 0.032258}, {"pattern_id": "Pattern_9", "section_title": "6. Common Mistakes to Avoid", "score": 0.03101}, {"pattern_id": "Pattern_9", "section_title": "2. Error Signatures", "score": 0.030579}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.030331}]}, {"id": "p10_error_code_1", "query": "DataPower is returning ENETUNREACH when connecting to a backend. What does this indicate?", "query_type": "error_code", "expected_pattern_ids": ["Pattern_10"], "expected_section_titles": ["Error Signatures"], "ground_truth_answer": "ENETUNREACH means the destination network is unreachable from DataPower, indicating a routing failure. This typically affects multiple services simultaneously and correlates with a recent network infrastructure change such as a routing table update or VLAN modification.", "answer": "No relevant runbook found for this query. The available runbooks cover incident troubleshooting patterns only.", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.031746}, {"pattern_id": "Pattern_1", "section_title": "2. Error Signatures", "score": 0.03125}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.031054}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.030679}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.030679}]}, {"id": "p10_symptom_1", "query": "Multiple services started failing simultaneously immediately after a scheduled maintenance window. What is the most likely cause?", "query_type": "symptom", "expected_pattern_ids": ["Pattern_10"], "expected_section_titles": ["5.1 Network Change Impact"], "ground_truth_answer": "Multiple simultaneous failures after a maintenance window strongly indicate a network change caused the outage. Check ServiceNow for network change records at or just before the failure timestamp, contact the change implementer, and request a rollback of the change if it is reversible.", "answer": "The most likely cause is a network change impact, such as a firewall or routing change made during the maintenance window. This matches the pattern where multiple services start failing at the same timestamp and ServiceNow shows network change activity at or just before the failure time. [Pattern 10 — Network & Infrastructure Failures | Troubleshooting: 5.1 Network Change Impact]\n\nIf multiple services are failing due to a network change, the escalation path is the Network Change Manager + P1 Bridge immediately. [Pattern 10 — Network & Infrastructure Failures | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.1 Network Change Impact", "score": 0.032266}, {"pattern_id": "Pattern_10", "section_title": "7. Escalation Matrix", "score": 0.031514}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.3 DNS Server Infrastructure Issue", "score": 0.031099}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.030579}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.1 High CPU", "score": 0.028778}]}, {"id": "p10_triage_1", "query": "How do I determine whether a firewall rule is blocking DataPower traffic to a backend?", "query_type": "triage", "expected_pattern_ids": ["Pattern_10"], "expected_section_titles": ["5.2 Firewall Rule Blocking Traffic"], "ground_truth_answer": "Run ping from the DataPower CLI to the backend IP. If ping succeeds but TCP connection fails, a firewall is blocking the specific port. Confirm the DataPower egress IP from Status → Network → Interface Status, then submit a firewall exception request via ServiceNow specifying source IP, destination IP, destination port, and protocol.", "answer": "Use the firewall-blocking pattern. The runbook says this presents as specific source→destination traffic failing, with `ECONNREFUSED` or an instant timeout, and no backend errors because DataPower cannot reach the backend IP. [Pattern_10 — Network & Infrastructure Failures | Troubleshooting: 5.2 Firewall Rule Blocking Traffic]\n\nTo verify the firewall is the cause:\n1. From the DataPower CLI, run `ping count 5 host <backend-ip>`. If ping succeeds but TCP fails, the firewall is blocking the specific port. [Pattern_10 — Network & Infrastructure Failures | Troubleshooting: 5.2 Firewall Rule Blocking Traffic]\n2. From an ops workstation, run `telnet <backend-ip> <port>` or `nc -zv <backend-ip> <port>`; it should connect if the path is open. [Pattern_10 — Network & Infrastructure Failures | Troubleshooting: 5.2 Firewall Rule Blocking Traffic]\n3. Check the DataPower egress IP under **Status → Network → Interface Status** and confirm that this is the source IP backends actually see, since it may differ from the management IP and may go through NAT. [Pattern_10 — Network & Infrastructure Failures | Troubleshooting: 5.2 Firewall Rule Blocking Traffic]\n\nIf the firewall is confirmed, the runbook says to raise a ServiceNow change request for a firewall rule update with source IP, destination IP, destination port, protocol, business justification, and approver. [Pattern_10 — Network & Infrastructure Failures | Troubleshooting: 5.2 Firewall Rule Blocking Traffic]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.032787}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.031754}, {"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.2 IP Not Whitelisted (HTTP 403)", "score": 0.03101}, {"pattern_id": "Pattern_10", "section_title": "6. Common Mistakes to Avoid", "score": 0.016129}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.015873}]}, {"id": "p10_procedure_1", "query": "How do I run a traceroute from the DataPower CLI to diagnose a network path issue?", "query_type": "procedure", "expected_pattern_ids": ["Pattern_10"], "expected_section_titles": ["5.3 Route Instability / Packet Loss"], "ground_truth_answer": "From the DataPower CLI, run: traceroute host <backend-ip>. This displays the hop-by-hop network path and identifies any router or switch with elevated latency or packet loss.", "answer": "Run the traceroute from the DataPower CLI with: [Pattern_10 — Network & Infrastructure Failures | Troubleshooting: 5.3 Route Instability / Packet Loss]\n\n```bash\ntraceroute host <backend-ip>\n```\n\nThis is the runbook command for making the hop-by-hop path visible when diagnosing route instability or packet loss. [Pattern_10 — Network & Infrastructure Failures | Troubleshooting: 5.3 Route Instability / Packet Loss]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.3 Route Instability / Packet Loss", "score": 0.032787}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.1 All Backends Timing Out (Network / Infrastructure Issue)", "score": 0.032002}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.031754}, {"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.2 DataPower DNS Configuration Issue", "score": 0.03101}, {"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.4 MTU Mismatch", "score": 0.030366}]}, {"id": "p10_escalation_1", "query": "A firewall rule has been confirmed as blocking production traffic between DataPower and a backend. What is the SLA?", "query_type": "escalation", "expected_pattern_ids": ["Pattern_10"], "expected_section_titles": ["Escalation Matrix"], "ground_truth_answer": "Escalate to the Network Security Team. The SLA is 2 hours for a P2 incident and immediate response for a P1 incident. If multiple services are affected, escalate to the Incident Commander immediately.", "answer": "Firewall rule blocking production traffic should be escalated to the Network Security Team with an SLA of **2 hours for P2 / Immediate for P1**. [Pattern_10 — Network & Infrastructure Failures | 7. Escalation Matrix]", "negative_handled": false, "hit": true, "sources": [{"pattern_id": "Pattern_10", "section_title": "Troubleshooting: 5.2 Firewall Rule Blocking Traffic", "score": 0.032787}, {"pattern_id": "Pattern_1", "section_title": "7. Escalation Matrix", "score": 0.032258}, {"pattern_id": "Pattern_10", "section_title": "7. Escalation Matrix", "score": 0.03101}, {"pattern_id": "Pattern_9", "section_title": "7. Escalation Matrix", "score": 0.015873}, {"pattern_id": "Pattern_10", "section_title": "6. Common Mistakes to Avoid", "score": 0.015873}]}, {"id": "neg_1", "query": "How do I configure a new Multi-Protocol Gateway service on DataPower from scratch?", "query_type": "negative", "expected_pattern_ids": [], "expected_section_titles": [], "ground_truth_answer": "No relevant runbook exists for this query. The available runbooks cover incident troubleshooting patterns only and do not include DataPower configuration guides.", "answer": "No relevant runbook found for this query. The available runbooks cover incident troubleshooting patterns only.", "negative_handled": true, "hit": false, "sources": [{"pattern_id": "Pattern_5", "section_title": "1. Overview", "score": 0.032522}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.1 No Route Matched (HTTP 404)", "score": 0.032266}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.032002}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.2 Service Disabled (HTTP 503)", "score": 0.03125}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.4 Backend URL Misconfiguration", "score": 0.029857}]}, {"id": "neg_2", "query": "What is the process for onboarding a new API onto the ESGA gateway?", "query_type": "negative", "expected_pattern_ids": [], "expected_section_titles": [], "ground_truth_answer": "No relevant runbook exists for this query. The available runbooks cover incident troubleshooting patterns only and do not include API onboarding procedures.", "answer": "No relevant runbook found for this query. The available runbooks cover incident troubleshooting patterns only.", "negative_handled": true, "hit": false, "sources": [{"pattern_id": "Pattern_3", "section_title": "1. Overview", "score": 0.031319}, {"pattern_id": "Pattern_4", "section_title": "1. Overview", "score": 0.030579}, {"pattern_id": "Pattern_3", "section_title": "Troubleshooting: 5.3 LDAP / API Key Authentication Failure", "score": 0.030366}, {"pattern_id": "Pattern_5", "section_title": "6. Common Mistakes to Avoid", "score": 0.029857}, {"pattern_id": "Pattern_6", "section_title": "Troubleshooting: 5.4 Payload Size Limit Exceeded (HTTP 413)", "score": 0.016393}]}, {"id": "neg_3", "query": "How do I set up DataPower high availability and clustering?", "query_type": "negative", "expected_pattern_ids": [], "expected_section_titles": [], "ground_truth_answer": "No relevant runbook exists for this query. The available runbooks cover incident troubleshooting patterns only and do not include high availability configuration guidance.", "answer": "No relevant runbook found for this query. The available runbooks cover incident troubleshooting patterns only.", "negative_handled": true, "hit": false, "sources": [{"pattern_id": "Pattern_2", "section_title": "Troubleshooting: 5.2 DataPower DNS Configuration Issue", "score": 0.032522}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.03125}, {"pattern_id": "Pattern_9", "section_title": "6. Common Mistakes to Avoid", "score": 0.031099}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.1 High CPU", "score": 0.030769}, {"pattern_id": "Pattern_9", "section_title": "4. Triage Decision Tree", "score": 0.029851}]}, {"id": "neg_4", "query": "What are the recommended DataPower performance tuning settings for high-volume services?", "query_type": "negative", "expected_pattern_ids": [], "expected_section_titles": [], "ground_truth_answer": "No relevant runbook exists for this query. The available runbooks cover incident troubleshooting patterns only and do not include performance tuning guidance.", "answer": "No relevant runbook found for this query. The available runbooks cover incident troubleshooting patterns only.", "negative_handled": true, "hit": false, "sources": [{"pattern_id": "Pattern_9", "section_title": "6. Common Mistakes to Avoid", "score": 0.032522}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.1 High CPU", "score": 0.032018}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.3 Thread Pool Exhaustion", "score": 0.032002}, {"pattern_id": "Pattern_9", "section_title": "Troubleshooting: 5.2 Memory Exhaustion", "score": 0.031498}, {"pattern_id": "Pattern_1", "section_title": "Troubleshooting: 5.2 Timeout Config Mismatch", "score": 0.03009}]}, {"id": "neg_5", "query": "How do I configure WS-Security for a SOAP service on DataPower?", "query_type": "negative", "expected_pattern_ids": [], "expected_section_titles": [], "ground_truth_answer": "No relevant runbook exists for this query. The available runbooks cover incident troubleshooting patterns only and do not include WS-Security configuration steps.", "answer": "No relevant runbook found for this query. The available runbooks cover incident troubleshooting patterns only.", "negative_handled": true, "hit": false, "sources": [{"pattern_id": "Pattern_5", "section_title": "1. Overview", "score": 0.031754}, {"pattern_id": "Pattern_5", "section_title": "Troubleshooting: 5.3 Bad Gateway (HTTP 502)", "score": 0.031514}, {"pattern_id": "Pattern_6", "section_title": "1. Overview", "score": 0.031498}, {"pattern_id": "Pattern_4", "section_title": "Troubleshooting: 5.1 JSON / XML Parse Error", "score": 0.016393}, {"pattern_id": "Pattern_6", "section_title": "2. Error Signatures", "score": 0.016393}]}];
+const TYPE_LABELS = {"error_code": "Error Code", "symptom": "Symptom", "triage": "Triage", "procedure": "Procedure", "negative": "Negative", "escalation": "Escalation", "edge_case": "Edge Case"};
+
+let activeFilter = 'all';
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const search = (document.getElementById('searchBox').value || '').toLowerCase();
+  const tbody = document.getElementById('casesBody');
+  tbody.innerHTML = '';
+
+  let filtered = RESULTS.filter(r => {
+    if (activeFilter === 'miss' && r.hit) return false;
+    if (activeFilter !== 'all' && activeFilter !== 'miss' && r.query_type !== activeFilter) return false;
+    if (search && !r.query.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('resultsCount').textContent =
+    filtered.length + ' of ' + RESULTS.length + ' cases shown';
+
+  filtered.forEach((r, idx) => {
+    const hitBadge = r.hit
+      ? '<span class="badge-hit">HIT</span>'
+      : '<span class="badge-miss">MISS</span>';
+
+    const expectedTags = (r.expected_pattern_ids || [])
+      .map(p => `<span class="pattern-tag">${p}</span>`).join(' ');
+
+    const sourceTags = (r.sources || []).slice(0, 3)
+      .map(s => {
+        const isExpected = (r.expected_pattern_ids || []).includes(s.pattern_id);
+        const cls = isExpected ? 'retrieved' : '';
+        return `<span class="pattern-tag ${cls}">${s.pattern_id}</span>`;
+      }).join(' ');
+
+    const typeLabel = TYPE_LABELS[r.query_type] || r.query_type;
+    const rowCls = r.hit ? 'case-row' : 'case-row row-miss';
+    const rowId = 'row-' + idx;
+    const detailId = 'detail-' + idx;
+
+    const sourcesList = (r.sources || []).map((s, i) => {
+      const isExpected = (r.expected_pattern_ids || []).includes(s.pattern_id);
+      const markCls = isExpected ? 'src-pattern' : '';
+      return `<li>
+        <span class="rank">#${i+1}</span>
+        <span class="${markCls}">${s.pattern_id}</span>
+        <span style="color:#94a3b8">·</span>
+        <span style="flex:1;font-size:11px;color:#64748b">${s.section_title}</span>
+        <span class="src-score">${s.score.toFixed(4)}</span>
+      </li>`;
+    }).join('');
+
+    const mainRow = `
+      <tr class="${rowCls}" id="${rowId}" onclick="toggleDetail(${idx})">
+        <td style="color:#94a3b8;font-size:12px;white-space:nowrap">${idx+1}</td>
+        <td><div class="query-text">${escHtml(r.query)}</div></td>
+        <td><span class="badge-type">${typeLabel}</span></td>
+        <td>${expectedTags}</td>
+        <td>${hitBadge}</td>
+        <td>${sourceTags}</td>
+      </tr>`;
+
+    const detailRow = `
+      <tr class="detail-row" id="${detailId}">
+        <td colspan="6">
+          <div class="detail-panel">
+            <div class="detail-grid">
+              <div class="detail-block">
+                <h4>Ground Truth Answer</h4>
+                <p>${escHtml(r.ground_truth_answer)}</p>
+              </div>
+              <div class="detail-block">
+                <h4>Generated Answer</h4>
+                <p>${escHtml(r.answer)}</p>
+              </div>
+              <div class="detail-block">
+                <h4>Retrieved Sources (top ${(r.sources || []).length})</h4>
+                <ul class="sources-list">${sourcesList}</ul>
+              </div>
+              <div class="detail-block">
+                <h4>Expected Sections</h4>
+                <p style="font-size:12px">${(r.expected_section_titles || []).join(', ') || '—'}</p>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+
+    tbody.insertAdjacentHTML('beforeend', mainRow + detailRow);
+  });
+}
+
+function toggleDetail(idx) {
+  const detail = document.getElementById('detail-' + idx);
+  detail.classList.toggle('open');
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+renderTable();
+</script>
+</body>
+</html>

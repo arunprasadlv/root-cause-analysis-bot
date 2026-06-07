@@ -29,6 +29,22 @@
     header .logo { font-size: 22px; }
     header h1 { font-size: 16px; font-weight: 600; letter-spacing: .3px; }
     header p  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    header .eval-link {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    header .eval-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
     #chat {
       flex: 1;
@@ -185,6 +201,9 @@
     <h1>ESGA DataPower RCA Assistant</h1>
     <p>AI-powered incident troubleshooting · Powered by ESGA runbooks</p>
   </div>
+  <a href="/eval-report" target="_blank" class="eval-link">
+    📊 Eval Report
+  </a>
 </header>
 
 <div id="chat">
