@@ -134,6 +134,26 @@ The assistant responds: *"No relevant runbook found for this query. The availabl
 
 ---
 
+## Guardrails
+
+The following guardrails are enforced at the system prompt and retrieval layers to keep answers grounded, safe, and auditable.
+
+| Guardrail | Mechanism |
+|---|---|
+| **Scope restriction** | System prompt explicitly lists in-scope incident types and out-of-scope topics (config, setup, HA, performance tuning) |
+| **Out-of-scope detection** | If the query is outside scope or the retrieved context doesn't address it, the model responds with a fixed "No relevant runbook found" message — no hallucinated answer |
+| **Retrieval-grounded only** | Rule 1: "Answer ONLY from the RUNBOOK CONTEXT provided. Never use prior knowledge." |
+| **Citation enforcement** | Rule 3: every factual claim must be cited as `[Pattern N — Name \| Section Title]`, making answers auditable |
+| **No speculation** | Rule 4: the model may not add steps or information not present in the retrieved context |
+| **Token cap** | `max_completion_tokens=512` prevents overly long responses that tend to introduce hallucinated detail |
+| **Context deduplication** | `deduplicate_by_pattern()` limits any single runbook pattern to 3 chunks, preventing one pattern crowding out others in multi-pattern queries |
+| **Error code routing** | `promote_error_signatures()` pins Error Signatures chunks to the top context slots when the query contains hex or symbolic error codes |
+| **Escalation routing** | `promote_escalation_matrix()` pins Escalation Matrix chunks to the top slots when the query mentions escalation, SLA, or contact-related terms |
+| **Conversation history window** | `HISTORY_WINDOW=10` turns — older turns are dropped to prevent stale context influencing current answers |
+| **Query reformulation** | A lightweight LLM call rewrites ambiguous follow-up queries (e.g. pronouns) into self-contained search queries before retrieval, bounded at 128 tokens |
+
+---
+
 ## Eval Report
 
 The assistant ships with a built-in evaluation report accessible at:
