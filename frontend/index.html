@@ -191,6 +191,41 @@
       padding: 40px 16px 0;
     }
     .hint strong { display: block; font-size: 15px; color: #64748b; margin-bottom: 6px; }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 0 8px;
+    }
+    .example-chip {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #334155;
+      cursor: pointer;
+      text-align: left;
+      max-width: 320px;
+      line-height: 1.45;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .example-chip:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+      background: #f8faff;
+    }
+    .example-chip .ex-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
   </style>
 </head>
 <body>
@@ -210,6 +245,32 @@
   <div class="hint">
     <strong>Ask about a DataPower incident</strong>
     Paste an error code, describe a symptom, or ask who to escalate to.
+    <div class="examples">
+      <button class="example-chip" onclick="useExample(this)">
+        <span class="ex-icon">🔴</span>
+        What does error code 0x00d30003 mean on DataPower?
+      </button>
+      <button class="example-chip" onclick="useExample(this)">
+        <span class="ex-icon">🌐</span>
+        Multiple backend services are timing out simultaneously. What should I check first?
+      </button>
+      <button class="example-chip" onclick="useExample(this)">
+        <span class="ex-icon">🔑</span>
+        All users are getting HTTP 401 after a JWT signing key rotation. How do I fix this?
+      </button>
+      <button class="example-chip" onclick="useExample(this)">
+        <span class="ex-icon">📋</span>
+        A backend timeout issue has persisted for over 30 minutes. Who do I escalate to and what is the SLA?
+      </button>
+      <button class="example-chip" onclick="useExample(this)">
+        <span class="ex-icon">🔒</span>
+        DataPower is showing a certificate expiry warning for a service. What should I do?
+      </button>
+      <button class="example-chip" onclick="useExample(this)">
+        <span class="ex-icon">🚦</span>
+        A client is receiving HTTP 429 Too Many Requests from DataPower. How do I investigate?
+      </button>
+    </div>
   </div>
 </div>
 
@@ -222,6 +283,16 @@
   const chat    = document.getElementById('chat');
   const input   = document.getElementById('query');
   const sendBtn = document.getElementById('send');
+
+  function useExample(btn) {
+    // Extract text without the icon span
+    const text = btn.querySelector('.ex-icon').nextSibling.textContent.trim();
+    input.value = text;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+    input.focus();
+    sendMessage();
+  }
 
   const HISTORY_WINDOW = 10; // turns
   let history = [];
