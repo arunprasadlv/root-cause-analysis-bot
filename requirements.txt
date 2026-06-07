@@ -1,29 +1,19 @@
-# Core API
+# API (deployed to Vercel)
 fastapi
 uvicorn
-
-# LangChain
-langchain
-langchain-community
-langchain-openai
-
-# Vector store + database
-supabase
-
-# OpenAI client (direct — not via LangChain wrapper)
 openai
-
-# Document parsing
-markdown-it-py
-
-# API utilities
+supabase
 httpx
 pydantic
-
-# Local dev only
 python-dotenv
 
-# Eval only (not deployed to Vercel) — install with: pip install ragas datasets pandas
-# ragas>=0.1.0
+# Ingestion only (run locally via ingest.py — do NOT deploy)
+# markdown-it-py
+
+# Eval only (run locally — do NOT deploy)
+# langchain
+# langchain-community
+# langchain-openai
+# ragas
 # datasets
 # pandas

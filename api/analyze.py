@@ -11,8 +11,29 @@ load_dotenv()
 
 router = APIRouter()
 
-_supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
-_openai = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+_supabase = None
+_openai = None
+
+
+def _get_supabase():
+    global _supabase
+    if _supabase is None:
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SERVICE_KEY")
+        if not url or not key:
+            raise HTTPException(status_code=500, detail="SUPABASE_URL / SUPABASE_SERVICE_KEY not configured")
+        _supabase = create_client(url, key)
+    return _supabase
+
+
+def _get_openai():
+    global _openai
+    if _openai is None:
+        key = os.environ.get("OPENAI_API_KEY")
+        if not key:
+            raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
+        _openai = OpenAI(api_key=key)
+    return _openai
 
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = os.environ.get("LLM_MODEL", "gpt-5.4-mini")
@@ -169,7 +190,7 @@ def reformulate_query(query: str, history: list[HistoryMessage]) -> str:
     history_text = "\n".join(f"{m.role.upper()}: {m.content}" for m in recent)
 
     try:
-        completion = _openai.chat.completions.create(
+        completion = _get_openai().chat.completions.create(
             model=CHAT_MODEL,
             temperature=0,
             max_completion_tokens=128,
@@ -198,7 +219,7 @@ def analyze(req: AnalyzeRequest):
 
     # 2. Embed the reformulated query
     try:
-        embedding = _openai.embeddings.create(
+        embedding = _get_openai().embeddings.create(
             model=EMBED_MODEL,
             input=retrieval_query,
         ).data[0].embedding
@@ -207,7 +228,7 @@ def analyze(req: AnalyzeRequest):
 
     # 3. Dense retrieval
     try:
-        dense_results = _supabase.rpc("match_documents", {
+        dense_results = _get_supabase().rpc("match_documents", {
             "query_embedding": embedding,
             "match_count": RETRIEVAL_K,
             "filter": {},
@@ -220,7 +241,7 @@ def analyze(req: AnalyzeRequest):
     fts_query = build_fts_query(retrieval_query)
     if fts_query:
         try:
-            sparse_results = _supabase.rpc("match_documents_fts", {
+            sparse_results = _get_supabase().rpc("match_documents_fts", {
                 "query_text": fts_query,
                 "match_count": RETRIEVAL_K,
                 "filter": {},
@@ -232,7 +253,7 @@ def analyze(req: AnalyzeRequest):
     hex_results = []
     for code in extract_error_codes(retrieval_query):
         try:
-            rows = _supabase.rpc("match_documents", {
+            rows = _get_supabase().rpc("match_documents", {
                 "query_embedding": embedding,
                 "match_count": RETRIEVAL_K,
                 "filter": {"error_codes": [code]},
@@ -275,7 +296,7 @@ def analyze(req: AnalyzeRequest):
 
     # 9. Generate answer
     try:
-        completion = _openai.chat.completions.create(
+        completion = _get_openai().chat.completions.create(
             model=CHAT_MODEL,
             temperature=0,
             max_completion_tokens=512,
