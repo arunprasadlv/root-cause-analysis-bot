@@ -1,10 +1,14 @@
+import os
+import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-from api.analyze import router as analyze_router
-from api.health import router as health_router
+from analyze import router as analyze_router
+from health import router as health_router
 
 app = FastAPI(title="RCA Chatbot API")
 app.include_router(analyze_router)
