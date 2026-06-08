@@ -37,7 +37,7 @@ def _get_openai():
 
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = os.environ.get("LLM_MODEL", "gpt-5.4-mini")
-TOP_K = 5
+TOP_K = 3
 RETRIEVAL_K = 10
 RRF_K = 60
 HISTORY_WINDOW = int(os.environ.get("HISTORY_WINDOW", "10"))  # max conversation turns kept
@@ -173,6 +173,17 @@ def promote_escalation_matrix(chunks: list, query: str) -> list:
     return (esc + other)[:TOP_K]
 
 
+def filter_to_dominant_pattern(chunks: list, query: str) -> list:
+    if not _ESCALATION_RE.search(query) or not chunks:
+        return chunks
+    pattern_counts: dict[str, int] = {}
+    for c in chunks:
+        pid = c["metadata"]["pattern_id"]
+        pattern_counts[pid] = pattern_counts.get(pid, 0) + 1
+    dominant_pattern = max(pattern_counts, key=pattern_counts.get)
+    return [c for c in chunks if c["metadata"]["pattern_id"] == dominant_pattern]
+
+
 def reciprocal_rank_fusion(*result_lists: list) -> list:
     scores: dict = {}
     chunk_data: dict = {}
@@ -300,6 +311,9 @@ def analyze(req: AnalyzeRequest):
 
     # 6c. Promote escalation matrix chunks to top positions for escalation queries
     chunks = promote_escalation_matrix(chunks, retrieval_query)
+
+    # 6d. For escalation queries, keep only the dominant matched pattern
+    chunks = filter_to_dominant_pattern(chunks, retrieval_query)
 
     # 7. Format context
     context_parts = []
