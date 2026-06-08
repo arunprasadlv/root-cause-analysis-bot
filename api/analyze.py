@@ -78,7 +78,10 @@ RULES — follow these exactly:
 7. For escalation queries (who to contact, SLA, escalation path): list ALL rows
    from the escalation matrix for the matching pattern — include every condition,
    every team, and every SLA, not just the one that best matches the query.
-   Format each entry as: Condition | Escalate To | SLA.\
+   Format each entry as: Condition | Escalate To | SLA.
+8. Format all responses using markdown: use bullet points (- item) for any list of
+   steps, checks, or conditions; use **bold** for key terms and pattern names; use
+   `backticks` for error codes, HTTP status codes, and command names.\
 """
 
 _REFORMULATE_PROMPT = """\

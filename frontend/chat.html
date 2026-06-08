@@ -93,6 +93,9 @@
 
     .bubble p   { margin-bottom: 8px; }
     .bubble p:last-of-type { margin-bottom: 0; }
+    .bubble ul, .bubble ol { margin: 4px 0 8px 0; padding-left: 22px; }
+    .bubble li { margin-bottom: 3px; line-height: 1.5; }
+    .bubble li:last-child { margin-bottom: 0; }
     .bubble code {
       background: rgba(0,0,0,.07);
       border-radius: 4px;
@@ -368,11 +371,44 @@
   }
 
   function formatText(text) {
-    return text
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const escaped = text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const inline = s => s
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\n/g, '<br>');
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    const lines = escaped.split('\n');
+    const parts = [];
+    let listType = null;
+    let listItems = [];
+
+    const flushList = () => {
+      if (listType) {
+        parts.push(`<${listType}>${listItems.join('')}</${listType}>`);
+        listType = null;
+        listItems = [];
+      }
+    };
+
+    for (const line of lines) {
+      const ulMatch = line.match(/^[-*] (.+)/);
+      const olMatch = line.match(/^\d+\. (.+)/);
+      if (ulMatch) {
+        if (listType === 'ol') flushList();
+        listType = 'ul';
+        listItems.push(`<li>${inline(ulMatch[1])}</li>`);
+      } else if (olMatch) {
+        if (listType === 'ul') flushList();
+        listType = 'ol';
+        listItems.push(`<li>${inline(olMatch[1])}</li>`);
+      } else {
+        flushList();
+        parts.push(inline(line) + '<br>');
+      }
+    }
+    flushList();
+    return parts.join('');
   }
 
   function trimHistory(hist) {
