@@ -2,6 +2,8 @@
 
 AI-powered incident troubleshooting chatbot for ESGA DataPower support engineers. Ask about an error code, describe a symptom, or ask who to escalate to — the assistant retrieves relevant sections from the official ESGA runbooks and generates grounded, cited recommendations.
 
+🎬 **[Watch the demo video (4 min)](docs/demo.mp4)** — error-code lookup with citations, symptom triage, escalation paths, multi-turn context, guardrails, and the eval report. (Storyboard: [docs/demo_script.md](docs/demo_script.md); regenerate with the scripts in [tools/](tools/).)
+
 ---
 
 ## Architecture
