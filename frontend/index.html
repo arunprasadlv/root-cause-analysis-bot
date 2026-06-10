@@ -622,7 +622,7 @@ OPENAI_API_KEY=&lt;your-openai-api-key&gt;</pre>
 <div class="section" id="eval">
   <p class="section-label">Eval Report</p>
   <h2>Evaluation Results</h2>
-  <p class="section-desc">Evaluated against a 57-case golden test set (47 positive + 5 out-of-scope negative cases) spanning 9 incident patterns, using RAGAS and custom retrieval metrics.</p>
+  <p class="section-desc">Evaluated against a 52-case golden test set (47 positive + 5 out-of-scope negative cases) spanning 9 incident patterns, using RAGAS and custom retrieval metrics.</p>
 
   <div class="eval-tables">
     <div class="eval-card">
@@ -633,8 +633,9 @@ OPENAI_API_KEY=&lt;your-openai-api-key&gt;</pre>
         </thead>
         <tbody>
           <tr><td>Hit Rate @ 5</td><td class="score">1.000</td><td>≥ 0.85</td><td class="pass">PASS</td></tr>
-          <tr><td>MRR @ 5</td><td class="score">0.957</td><td>≥ 0.75</td><td class="pass">PASS</td></tr>
-          <tr><td>Error Code Routing</td><td class="score">0.944</td><td>≥ 0.90</td><td class="pass">PASS</td></tr>
+          <tr><td>MRR @ 5</td><td class="score">0.979</td><td>≥ 0.75</td><td class="pass">PASS</td></tr>
+          <tr><td>Error Code Routing</td><td class="score">1.000</td><td>≥ 0.90</td><td class="pass">PASS</td></tr>
+          <tr><td>Escalation Routing</td><td class="score">1.000</td><td>≥ 0.90</td><td class="pass">PASS</td></tr>
           <tr><td>Negative Handling</td><td class="score">1.000</td><td>= 1.00</td><td class="pass">PASS</td></tr>
         </tbody>
       </table>
@@ -647,15 +648,17 @@ OPENAI_API_KEY=&lt;your-openai-api-key&gt;</pre>
           <tr><th>Metric</th><th>Score</th><th>Target</th><th>Status</th></tr>
         </thead>
         <tbody>
-          <tr><td>Faithfulness</td><td class="score">0.892</td><td>≥ 0.90</td><td class="fail">FAIL</td></tr>
+          <tr><td>Faithfulness</td><td class="score">0.970</td><td>≥ 0.90</td><td class="pass">PASS</td></tr>
           <tr><td>Citation Accuracy</td><td class="score">1.000</td><td>≥ 0.90</td><td class="pass">PASS</td></tr>
-          <tr><td>Answer Relevancy</td><td class="score">0.696</td><td>≥ 0.85</td><td class="fail">FAIL</td></tr>
-          <tr><td>Answer Correctness</td><td class="score">0.634</td><td>≥ 0.75</td><td class="fail">FAIL</td></tr>
-          <tr><td>Hallucination Rate</td><td class="score">10.9%</td><td>≤ 5%</td><td class="fail">FAIL</td></tr>
+          <tr><td>Answer Correctness</td><td class="score">0.805</td><td>≥ 0.75</td><td class="pass">PASS</td></tr>
+          <tr><td>Answer Relevancy</td><td class="score">0.808</td><td>≥ 0.85</td><td class="fail">FAIL*</td></tr>
+          <tr><td>Hallucination Rate</td><td class="score">3.0%</td><td>≤ 5%</td><td class="pass">PASS</td></tr>
         </tbody>
       </table>
     </div>
   </div>
+
+  <p class="eval-note">* Answer Relevancy is a known RAGAS embedding-judge artifact on error-code queries (hex/symbolic codes embed poorly), not an answer-quality issue — see the full report for detail.</p>
 
   <div class="eval-cta">
     <a href="/eval-report" target="_blank" class="btn-eval">📊 View Full Eval Report</a>

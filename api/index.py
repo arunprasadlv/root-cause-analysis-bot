@@ -31,7 +31,7 @@ def chat():
 
 
 @app.get("/eval-report")
-def eval_report(phase: str = "phase6_production"):
+def eval_report(phase: str = "phase21_final"):
     report_file = _reports_dir / f"{phase}.html"
     if not report_file.exists():
         raise HTTPException(status_code=404, detail=f"Report not found: {phase}")
