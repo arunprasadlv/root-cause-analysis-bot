@@ -26,9 +26,9 @@ TITLE_SECONDS = 4.0
 
 # (title, subtitle-on-card, lower-third caption during the scene, speed factor)
 SCENES = [
-    ("ESGA DataPower RCA Assistant",
+    ("DataPower RCA Assistant",
      "Mid-incident, support engineers hunt through dense runbooks.\nWhat if you could just ask?",
-     "AI-powered incident troubleshooting, grounded in ESGA runbooks", 1.0),
+     "AI-powered incident troubleshooting, grounded in platform runbooks", 1.0),
     ("How it works",
      "Runbooks → embeddings in Supabase (pgvector + full-text)\nHybrid retrieval + OpenAI = grounded, cited answers",
      "Hybrid RAG: dense + sparse retrieval over 9 runbooks", 1.0),

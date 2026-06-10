@@ -70,10 +70,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **Stack:** Python · LangChain · Supabase (pgvector + FTS) · OpenAI (model-agnostic) · FastAPI · Vercel
 
-**What this project does:** AI-powered incident troubleshooting chatbot that retrieves relevant ESGA DataPower runbook sections and generates grounded, cited recommendations for support engineers.
+**What this project does:** AI-powered incident troubleshooting chatbot that retrieves relevant DataPower runbook sections and generates grounded, cited recommendations for support engineers.
 
 **Key source files:**
-- `source/` — ESGA runbook Markdown files (the RAG knowledge base)
+- `source/` — runbook Markdown files (the RAG knowledge base)
 - `eval/golden_test_set.csv` — 57-case golden test set for RAG evaluation
 - `instructions/` — implementation plan amendments and specs
 

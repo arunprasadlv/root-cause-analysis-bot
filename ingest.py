@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ingest.py — Local CLI ingestion pipeline for ESGA runbook Markdown files.
+ingest.py — Local CLI ingestion pipeline for runbook Markdown files.
 
 Run:      python ingest.py --docs ./source/
 Dry-run:  python ingest.py --docs ./source/ --dry-run
@@ -127,7 +127,7 @@ def extract_doc_meta(text: str, sections: list[dict], filename: str) -> dict:
     pattern_id_m = re.search(r"Pattern_(\d+)", filename)
     pattern_id = f"Pattern_{pattern_id_m.group(1)}" if pattern_id_m else ""
 
-    # Pattern name: "# ESGA Pattern N Runbook: <Name>" → "<Name>"
+    # Pattern name: "# Pattern N Runbook: <Name>" → "<Name>"
     title_m = re.search(r"^#\s+.*?Runbook:\s+(.+)$", text, re.MULTILINE)
     pattern_name = title_m.group(1).strip() if title_m else ""
 
@@ -166,7 +166,7 @@ def build_chunk(
     chunk_id = f"{pattern_id}_chunk_{chunk_index}"
 
     # Header prepended before embedding only — not stored in content column
-    header = f"[ESGA {pattern_name} | {section_title}]"
+    header = f"[{pattern_name} | {section_title}]"
     embed_text = f"{header}\n\n{content}"
 
     metadata = {
@@ -294,7 +294,7 @@ def upload_chunks(chunks: list[Chunk]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Ingest ESGA runbook Markdown files into Supabase."
+        description="Ingest runbook Markdown files into Supabase."
     )
     parser.add_argument("--docs", default="./source/", help="Directory of .md runbook files")
     parser.add_argument(

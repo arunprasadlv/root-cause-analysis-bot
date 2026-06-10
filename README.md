@@ -1,6 +1,6 @@
-# ESGA DataPower RCA Assistant
+# DataPower RCA Assistant
 
-AI-powered incident troubleshooting chatbot for ESGA DataPower support engineers. Ask about an error code, describe a symptom, or ask who to escalate to — the assistant retrieves relevant sections from the official ESGA runbooks and generates grounded, cited recommendations.
+AI-powered incident troubleshooting chatbot for DataPower support engineers. Ask about an error code, describe a symptom, or ask who to escalate to — the assistant retrieves relevant sections from the official platform runbooks and generates grounded, cited recommendations.
 
 🎬 **[Watch the demo video (4 min)](docs/demo.mp4)** — error-code lookup with citations, symptom triage, escalation paths, multi-turn context, guardrails, and the eval report. (Storyboard: [docs/demo_script.md](docs/demo_script.md); regenerate with the scripts in [tools/](tools/).)
 
@@ -37,7 +37,7 @@ FastAPI  (api/index.py)
                                                   from eval/reports/
 ```
 
-**Knowledge base:** 9 ESGA runbooks (`source/`) parsed into ~79 chunks, indexed in Supabase with pgvector embeddings + full-text search. Ingestion is a local CLI step (`ingest.py`) — not part of the deployed app.
+**Knowledge base:** 9 runbooks (`source/`) parsed into ~79 chunks, indexed in Supabase with pgvector embeddings + full-text search. Ingestion is a local CLI step (`ingest.py`) — not part of the deployed app.
 
 **Key design decisions:**
 - Parser: `markdown-it-py` over `##`/`###` boundaries
@@ -209,24 +209,24 @@ python eval/generate_report.py --phase <phase-name>
 
 Results are saved to `eval/results/<phase>.json`. HTML reports are saved to `eval/reports/<phase>.html` and served at `/eval-report?phase=<phase-name>`.
 
-### Current results (phase21_final)
+### Current results (phase22_rebrand)
 
 | Metric | Score | Target | Status |
 |---|---|---|---|
-| Hit Rate @ 5 | 1.000 | ≥ 0.85 | PASS |
-| MRR @ 5 | 0.979 | ≥ 0.75 | PASS |
-| Context Precision @ 5 | 0.787 | ≥ 0.70 | PASS |
-| Context Recall (retrieval) | 1.000 | ≥ 0.80 | PASS |
+| Hit Rate @ 5 | 0.979 | ≥ 0.85 | PASS |
+| MRR @ 5 | 0.968 | ≥ 0.75 | PASS |
+| Context Precision @ 5 | 0.766 | ≥ 0.70 | PASS |
+| Context Recall (retrieval) | 0.968 | ≥ 0.80 | PASS |
 | Error Code Routing | 1.000 | ≥ 0.90 | PASS |
 | Escalation Routing | 1.000 | ≥ 0.90 | PASS |
 | Negative Handling | 1.000 | = 1.00 | PASS |
-| Faithfulness | 0.970 | ≥ 0.90 | PASS |
-| Answer Relevancy | 0.808 | ≥ 0.85 | FAIL* |
-| Context Precision (RAGAS) | 0.950 | ≥ 0.70 | PASS |
-| Context Recall (RAGAS) | 0.975 | ≥ 0.80 | PASS |
-| Answer Correctness | 0.805 | ≥ 0.75 | PASS |
-| Citation Accuracy | 1.000 | ≥ 0.90 | PASS |
-| Hallucination Rate | 0.030 | ≤ 0.05 | PASS |
+| Faithfulness | 0.971 | ≥ 0.90 | PASS |
+| Answer Relevancy | 0.785 | ≥ 0.85 | FAIL* |
+| Context Precision (RAGAS) | 0.947 | ≥ 0.70 | PASS |
+| Context Recall (RAGAS) | 0.940 | ≥ 0.80 | PASS |
+| Answer Correctness | 0.756 | ≥ 0.75 | PASS |
+| Citation Accuracy | 0.957 | ≥ 0.90 | PASS |
+| Hallucination Rate | 0.029 | ≤ 0.05 | PASS |
 
 \* **Known measurement artifact, not an answer-quality issue.** RAGAS Answer
 Relevancy reverse-generates questions from the answer and compares their
@@ -275,7 +275,7 @@ eval/
 frontend/
   index.html        — single-page chat UI
 source/
-  ESGA_Pattern_*.md — 9 runbook Markdown files (the knowledge base)
+  Pattern_*.md — 9 runbook Markdown files (the knowledge base)
 supabase/
   schema.sql        — pgvector + FTS table definitions
 ingest.py           — local ingestion CLI (parse → embed → upsert)

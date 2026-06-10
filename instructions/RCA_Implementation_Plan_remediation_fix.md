@@ -423,7 +423,7 @@ Evaluation is a standalone phase run **locally after each milestone** — it is 
 
 ### 7.2 Golden Test Set
 
-**57 test cases** — 52 positive and 5 negative. Built once from the actual ESGA runbooks before Phase 2 begins and reused across all phases. File: `eval/golden_test_set.csv`.
+**57 test cases** — 52 positive and 5 negative. Built once from the actual runbooks before Phase 2 begins and reused across all phases. File: `eval/golden_test_set.csv`.
 
 **Distribution:** Pattern 1 (6), Pattern 2 (5), Pattern 3 (6), Pattern 4 (5), Pattern 5 (5), Pattern 6 (5), Pattern 8 (5), Pattern 9 (5), Pattern 10 (5), Negatives (5).
 

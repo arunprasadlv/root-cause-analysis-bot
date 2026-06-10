@@ -1810,7 +1810,7 @@
     },
     {
       "id": "neg_2",
-      "query": "What is the process for onboarding a new API onto the ESGA gateway?",
+      "query": "What is the process for onboarding a new API onto the DataPower gateway?",
       "query_type": "negative",
       "expected_pattern_ids": [],
       "expected_section_types": [],

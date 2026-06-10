@@ -1,5 +1,5 @@
 # RCA Implementation Plan — v2.0
-## ESGA DataPower Root Cause Analyzer Chatbot
+## DataPower Root Cause Analyzer Chatbot
 
 > **Version:** 2.0  
 > **Date:** 2026-06-04  
@@ -13,11 +13,11 @@
 
 ## Project Overview
 
-AI-powered incident troubleshooting chatbot for ESGA DataPower support engineers. Retrieves relevant runbook sections from the ESGA knowledge base and generates grounded, cited recommendations for diagnosing and resolving DataPower incidents.
+AI-powered incident troubleshooting chatbot for DataPower support engineers. Retrieves relevant runbook sections from the gateway knowledge base and generates grounded, cited recommendations for diagnosing and resolving DataPower incidents.
 
-**Knowledge base:** ESGA DataPower runbooks (Markdown), covering 10 failure patterns (Patterns 1–10).
+**Knowledge base:** DataPower runbooks (Markdown), covering 10 failure patterns (Patterns 1–10).
 
-**Primary users:** ESGA support engineers triaging live DataPower incidents.
+**Primary users:** support engineers triaging live DataPower incidents.
 
 ---
 
@@ -71,7 +71,7 @@ root/
 │   └── health.py           ← GET /api/health
 ├── frontend/               ← Static web portal (HTML/JS or Next.js)
 │   └── index.html
-├── source/                 ← ESGA runbook Markdown files (RAG knowledge base)
+├── source/                 ← runbook Markdown files (RAG knowledge base)
 ├── eval/                   ← Evaluation scripts and test set
 │   ├── golden_test_set.csv
 │   ├── run_retrieval_eval.py
@@ -89,7 +89,7 @@ root/
 
 ### Overview
 
-The ingestion pipeline runs locally as a CLI command. It parses ESGA runbook Markdown files, splits them into chunks at defined heading boundaries, enriches each chunk with metadata, prepends a context header for embedding, and upserts to Supabase.
+The ingestion pipeline runs locally as a CLI command. It parses runbook Markdown files, splits them into chunks at defined heading boundaries, enriches each chunk with metadata, prepends a context header for embedding, and upserts to Supabase.
 
 ```bash
 python ingest.py --docs ./source/
@@ -141,14 +141,14 @@ Each chunk has a plain-text context header prepended **before embedding only**. 
 
 **Format:**
 ```
-[ESGA {pattern_name} | {section_title}]
+[{pattern_name} | {section_title}]
 
 {chunk_body}
 ```
 
 **Example:**
 ```
-[ESGA Pattern 1 — Backend Connection Timeout | Troubleshooting: 5.2 Timeout Config Mismatch]
+[Pattern 1 — Backend Connection Timeout | Troubleshooting: 5.2 Timeout Config Mismatch]
 
 **Symptoms:** Specific backend times out intermittently under load. Errors increase during
 peak traffic windows. Backend team confirms processing time exceeds DataPower timeout.
@@ -164,7 +164,7 @@ Full metadata stored per chunk in Supabase `jsonb`:
 ```python
 {
     # Original fields
-    "runbook_name":      str,   # e.g. "ESGA_Pattern_1_Backend_Connection_Timeout"
+    "runbook_name":      str,   # e.g. "Pattern_1_Backend_Connection_Timeout"
     "section_title":     str,   # e.g. "Troubleshooting: 5.2 Timeout Config Mismatch"
     "pattern_id":        str,   # e.g. "Pattern_1"
     "chunk_index":       int,   # sequential index within the document
@@ -185,7 +185,7 @@ Full metadata stored per chunk in Supabase `jsonb`:
 
 | Field | Source |
 |---|---|
-| `pattern_name` | Document `# Title` heading, strip "ESGA Pattern N Runbook: " prefix |
+| `pattern_name` | Document `# Title` heading, strip "Pattern N Runbook: " prefix |
 | `category` | Document Information table, "Category" row |
 | `severity` | Document Information table, "Severity" row |
 | `section_type` | Map heading text → enum at parse time (see mapping below) |

@@ -67,14 +67,14 @@ Each chunk must have a plain-text context header prepended **before embedding**.
 
 **Format:**
 ```
-[ESGA {pattern_name} | {section_title}]
+[{pattern_name} | {section_title}]
 
 {chunk_body}
 ```
 
 **Example:**
 ```
-[ESGA Pattern 1 — Backend Connection Timeout | Troubleshooting: 5.2 Timeout Config Mismatch]
+[Pattern 1 — Backend Connection Timeout | Troubleshooting: 5.2 Timeout Config Mismatch]
 
 **Symptoms:** Specific backend times out intermittently under load. Errors increase during
 peak traffic windows. Backend team confirms processing time exceeds DataPower timeout.
@@ -96,7 +96,7 @@ This is insufficient for metadata pre-filtering in Phase 3 hybrid retrieval. The
 ```python
 {
     # Original fields (unchanged)
-    "runbook_name":     str,   # e.g. "ESGA_Pattern_1_Backend_Connection_Timeout"
+    "runbook_name":     str,   # e.g. "Pattern_1_Backend_Connection_Timeout"
     "section_title":    str,   # e.g. "Troubleshooting: 5.2 Timeout Config Mismatch"
     "pattern_id":       str,   # e.g. "Pattern_1"
     "chunk_index":      int,   # sequential index within the document
@@ -117,7 +117,7 @@ This is insufficient for metadata pre-filtering in Phase 3 hybrid retrieval. The
 
 | Field | Source |
 |---|---|
-| `pattern_name` | Document `# Title` heading, strip "ESGA Pattern N Runbook: " prefix |
+| `pattern_name` | Document `# Title` heading, strip "Pattern N Runbook: " prefix |
 | `category` | Document Information table, "Category" row |
 | `severity` | Document Information table, "Severity" row |
 | `section_type` | Map heading text → enum at parse time (see mapping below) |

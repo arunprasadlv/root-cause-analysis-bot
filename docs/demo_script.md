@@ -1,4 +1,4 @@
-# Demo Video Script — ESGA DataPower RCA Assistant
+# Demo Video Script — DataPower RCA Assistant
 
 **Format:** silent screen capture + on-screen captions (no voiceover)
 **Duration:** ~5:00 · **Resolution:** 1920×1080, 30fps · **Browser zoom:** 110–125%
@@ -27,7 +27,7 @@ Legend: **TITLE** = full title card · **CAP** = caption overlay during action �
 
 ### Scene 1 — Hook · 0:00–0:25
 - **DO:** Landing page (`http://localhost:8000/`), slowly scroll the hero.
-- **TITLE:** "ESGA DataPower RCA Assistant"
+- **TITLE:** "DataPower RCA Assistant"
 - **CAP:** "Mid-incident, support engineers hunt through dense runbooks."
 - **CAP:** "What if you could just ask?"
 
@@ -83,7 +83,7 @@ Legend: **TITLE** = full title card · **CAP** = caption overlay during action �
 - **DO:** Open `/eval-report` (top-right link). Scroll the metrics.
 - **TITLE:** "Measured quality"
 - **CAP:** "Hit Rate@5 1.00 · Faithfulness 0.97 · Citations 100% · Hallucination 3%"
-- **CAP / end card:** "ESGA DataPower RCA Assistant — ask your runbooks."
+- **CAP / end card:** "DataPower RCA Assistant — ask your runbooks."
 
 ---
 
