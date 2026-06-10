@@ -30,6 +30,19 @@ load_dotenv()
 RESULTS_DIR = Path("eval/results")
 NEGATIVE_PHRASES = ["no relevant runbook", "not covered", "cannot find"]
 
+# Citation tags are scored separately by citation_accuracy; strip them (and
+# markdown formatting) before RAGAS so style doesn't penalise correctness/relevancy.
+_CITATION_RE = re.compile(r"\[Pattern[^\]]*\]")
+
+
+def clean_answer_for_ragas(text: str) -> str:
+    text = _CITATION_RE.sub("", text)
+    text = text.replace("**", "").replace("`", "")
+    text = re.sub(r"^[ \t]*[-*]\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
 GATE_C_GENERATION = {
     "faithfulness":       (0.90, True),
     "answer_relevancy":   (0.85, True),
@@ -117,16 +130,18 @@ def _ragas_llm_and_embeddings():
 
 
 def run_ragas_v2(positives: list[dict], metrics: dict) -> dict:
+    import math
+
     from ragas import evaluate, EvaluationDataset, SingleTurnSample
+    valid = [r for r in positives if r["ground_truth_answer"] and r["contexts"]]
     samples = [
         SingleTurnSample(
             user_input=r["query"],
-            response=r["answer"],
+            response=clean_answer_for_ragas(r["answer"]),
             retrieved_contexts=r["contexts"],
             reference=r["ground_truth_answer"],
         )
-        for r in positives
-        if r["ground_truth_answer"] and r["contexts"]
+        for r in valid
     ]
     if not samples:
         return {}
@@ -137,11 +152,18 @@ def run_ragas_v2(positives: list[dict], metrics: dict) -> dict:
     # Column names come from metric.name (e.g. LLMContextPrecisionWithReference →
     # "llm_context_precision_with_reference"), so map via the metric objects.
     df = result.to_pandas()
+    col_map = {our_key: m.name for our_key, m in metrics.items()}
     out = {}
-    for our_key, metric_obj in zip(metrics.keys(), metrics.values()):
-        col = metric_obj.name
+    for our_key, col in col_map.items():
         if col in df.columns:
             out[our_key] = round(float(df[col].mean()), 4)
+    # Persist per-case scores onto the result dicts (saved back to the JSON)
+    for i, r in enumerate(valid):
+        r["ragas"] = {}
+        for our_key, col in col_map.items():
+            if col in df.columns:
+                val = float(df.iloc[i][col])
+                r["ragas"][our_key] = round(val, 4) if not math.isnan(val) else None
     return out
 
 
@@ -152,8 +174,8 @@ def run_ragas_v1(positives: list[dict], metrics: dict) -> dict:
     if not valid:
         return {}
     data = {
-        "question":     [r["query"]                for r in valid],
-        "answer":       [r["answer"]               for r in valid],
+        "question":     [r["query"]                       for r in valid],
+        "answer":       [clean_answer_for_ragas(r["answer"]) for r in valid],
         "contexts":     [r["contexts"]             for r in valid],
         "ground_truth": [r["ground_truth_answer"]  for r in valid],
     }
